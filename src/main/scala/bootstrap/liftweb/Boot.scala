@@ -8,8 +8,6 @@ import common._
 import http._
 import js.jquery.JQueryArtifacts
 import sitemap._
-import Loc._
-import mapper._
 
 import net.liftmodules.JQueryModule
 
@@ -36,7 +34,7 @@ class Boot {
 
     //Init the jQuery module, see http://liftweb.net/jquery for more information.
     LiftRules.jsArtifacts = JQueryArtifacts
-    JQueryModule.InitParam.JQuery=JQueryModule.JQuery172
+    JQueryModule.InitParam.JQuery=JQueryModule.JQuery191
     JQueryModule.init()
 
     //Show the spinny image when an Ajax call starts
