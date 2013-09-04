@@ -69,6 +69,20 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
 
   }
   
+  // ## The parts of this WString between `neighs.prev` and `neighs.next`
+  // ...but excluding the neighbours themselves.
+  def subseq(neigs: Neighbours) : Vector[WChar] = ???
+  
+  /*   chars.dropWhile(_.id != neigs.prev).
+      drop(1).
+      takeWhile(_.id != neigs.next) 
+    
+    ... nope, because neighs.prev is Option[Id]
+    
+    Maybe Option[Id] => index?  
+       
+      */
+  
   // ## Integrate a `WChar` into the string.
   def insertAround(c: WChar, neighs: Neighbours) : WString = ???
 
