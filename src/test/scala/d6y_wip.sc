@@ -20,8 +20,15 @@ WString().ins(w1,0).ins(w2,1).text                //> res2: String = AB
 
 WString().ins(w1,0).ins(w2,0).text                //> res3: String = BA
 
-val s1 = WString().ins(w1,0).ins(w2,1).ins(w3,2).text
-                                                  //> s1  : String = ABC
+val s1 = WString().ins(w1,0).ins(w2,1).ins(w3,2)  //> s1  : woots.WString = WString(Vector(WChar(Id(1,1),A,true), WChar(Id(1,2),B,
+                                                  //| true), WChar(Id(1,3),C,true)))
 
+s1.neighbours(0)                                  //> res4: woots.Neighbours = Neighbours(None,Some(Id(1,1)))
+s1.neighbours(1)                                  //> res5: woots.Neighbours = Neighbours(Some(Id(1,1)),Some(Id(1,2)))
+
+s1.neighbours(2)                                  //> res6: woots.Neighbours = Neighbours(Some(Id(1,2)),Some(Id(1,3)))
+s1.neighbours(3)                                  //> res7: woots.Neighbours = Neighbours(Some(Id(1,3)),None)
+
+WString().neighbours(0)                           //> res8: woots.Neighbours = Neighbours(None,None)
 
 }
