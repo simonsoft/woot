@@ -9,8 +9,6 @@ case class Id(ns: SiteId, ng: ClockValue) {
 
 object Id {
   def genFrom(seed: Id) : Stream[Id] = Stream.cons(seed, genFrom(seed.inc))
-      //val Beginning = Id(-1,0)
-      //val Ending = Id(-1,1)
 }
 
 // TODO: what is the real starting point?
@@ -45,7 +43,7 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
     // - Bound the insert point between 0 and text.length
     val p = min(text.length, max(pos,0))
 
-    // - "Insert" by create a new vector
+    // - "Insert" by creating a new vector
     val (before, after) = chars splitAt p
     WString((before :+ char) ++ after)
   }
@@ -54,9 +52,11 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
   // ## The previous and next at a given visible position
   // For use when we are going to insert a new character at a
   // particular position. 
+  //
   // For example, given the `WString` "ABC":
-  //     neighbours(0) == None, A.id
-  //     neighbours(1) == A.id, B.id
+  //
+  //     neighbours(0) =~ (None, A.id)
+  //     neighbours(1) =~ (A.id, B.id)
   def neighbours(visibleInsertPos: Int) : Neighbours = {
     require(visibleInsertPos >= 0 && visibleInsertPos <= visible.length)
 
@@ -68,6 +68,9 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
     }
 
   }
+  
+  // ## Integrate a `WChar` into the string.
+  def insertAround(c: WChar, neighs: Neighbours) : WString = ???
 
 
 
