@@ -3,8 +3,9 @@ package woots
 import math.{min,max}
 
 
-case class Id(ns: SiteId, ng: ClockValue) {
+case class Id(ns: SiteId, ng: ClockValue) { 
   def inc = copy(ng = ng + 1)
+  def < (that: Id) = (ns < that.ns) || (ns == that.ns && ng < that.ng)  
 }
 
 object Id {
@@ -119,10 +120,13 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
       // Looking at all the characters between the previous and next positions:
       subseq(ns) match {
           // - when where's no decision about where, just insert after `prev`:
+          // (NB: I believe this could be insert _at_ `ns.next` instead of _after_ `ns.prev`)
           case Vector() => ins(c, insertIndexAfter(ns.prev))
           
-          // - when there's a choice, locate an insert point based on the Woot precedes (≺) relation
-          case search => this
+          // - when there's a choice, locate an insert point based on the `Id.<`
+          case search => 
+            println(s"Ins($c,$ns) : $search")
+            this
       }
 
   }
