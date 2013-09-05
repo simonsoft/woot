@@ -17,11 +17,11 @@ object Id {
 
 case class WChar(id: Id, alpha: Char, isVisible: Boolean = true)
 
+// Neighbours
+// ==========
+// The `Id` of the `WChar` before and after a new `WChar`
+// Using `None` to signify beginning and ending (which may be a mistake).
 case class Neighbours(prev: Option[Id], next: Option[Id]) 
-
-object Neighbours {
-  lazy val nil = Neighbours(None,None)
-}
 
 // String representation
 // =====================
@@ -36,7 +36,7 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
   // ## The visible text
   def text : String = visible.map(_.alpha).mkString
 
-  // ## Insert a WChar into the internal vector at position `pos`
+  // ## Insert a `WChar` into the internal vector at position `pos`
   // NB: position indexed from zero
   //
   def ins(char: WChar, pos: Int) : WString = {  
@@ -49,7 +49,7 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
   }
 
 
-  // ## The previous and next at a given visible position
+  // ## Compute the previous and next for a given visible position.
   // For use when we are going to insert a new character at a
   // particular position. 
   //
@@ -69,23 +69,65 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
 
   }
   
-  // ## The parts of this WString between `neighs.prev` and `neighs.next`
+  private def index(id: Id) : Option[Int]  = 
+    chars.indexWhere(_.id == id) match {
+    case -1 => None
+    case n  => Some(n)
+  } 
+  
+  // ## Test to see if the conditions for a character insert/update apply
+  def canApply(ns: Neighbours) : Boolean = {
+    
+    // Either:
+    //
+    // - the prev (or next) signifies the beginning (or end) position; or
+    // - the prev (or next) can be found
+    def canApply(id: Option[Id]) : Boolean =
+        id.isEmpty || id.flatMap(index).isDefined
+        
+    canApply(ns.prev) && canApply(ns.next)
+  }
+    
+  // ## Compute index just after the locatio of the `previous` `ID`.
+  //
+  // For example, considering "ABC"...
+  //
+  //     inserting X around None, B.id = 0
+  //     inserting X around A.id, B.id = 1
+  //     inserting X around B.id, C.id = 2
+  //     inserting X around C.id, None = 3 (append) 
+  def insertIndexAfter(prev: Option[Id]) : Int =
+      prev.flatMap(index).map(_ + 1) getOrElse 0
+  
+  // ## The parts of this `WString` between `neighs.prev` and `neighs.next`
   // ...but excluding the neighbours themselves.
-  def subseq(neigs: Neighbours) : Vector[WChar] = ???
-  
-  /*   chars.dropWhile(_.id != neigs.prev).
-      drop(1).
-      takeWhile(_.id != neigs.next) 
+  def subseq(ns: Neighbours) : Vector[WChar] = {
+    // Precondition: `require(canApply(ns))`  
     
-    ... nope, because neighs.prev is Option[Id]
+    val from = insertIndexAfter(ns.prev)
     
-    Maybe Option[Id] => index?  
-       
-      */
+    val until = 
+      ns.next.flatMap(index) getOrElse chars.length
+    
+    chars.slice(from,until)  
+  }
   
-  // ## Integrate a `WChar` into the string.
-  def insertAround(c: WChar, neighs: Neighbours) : WString = ???
+  // ## Integrate a `WChar` into the `WString`.
+  def insertBetween(c: WChar, ns: Neighbours) : WString = {
+      // Precondition: `require(canApply(ns))`  
 
+      // Looking at all the characters between the previous and next positions:
+      subseq(ns) match {
+          // - when where's no decision about where, just insert after `prev`:
+          case Vector() => ins(c, insertIndexAfter(ns.prev))
+          
+          // - when there's a choice, locate an insert point based on the Woot precedes (≺) relation
+          case search => this
+      }
+
+  }
+  
+      
 
 
 }
