@@ -16,7 +16,8 @@ object Id {
 // private val ids = Id genFrom Id(1,1)
 
 
-case class WChar(id: Id, alpha: Char, isVisible: Boolean = true)
+case class WChar(id: Id, alpha: Char, isVisible: Boolean = true) 
+
 
 // Neighbours
 // ==========
@@ -89,7 +90,7 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
     canApply(ns.prev) && canApply(ns.next)
   }
     
-  // ## Compute index just after the locatio of the `previous` `ID`.
+  // ## Compute index just after the location of the `previous` `ID`.
   //
   // For example, considering "ABC"...
   //
@@ -99,7 +100,18 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
   //     inserting X around C.id, None = 3 (append) 
   def insertIndexAfter(prev: Option[Id]) : Int =
       prev.flatMap(index).map(_ + 1) getOrElse 0
-  
+      
+  // ## Compute the previous node of a given node.
+  // TODO: make less ugly - is the ugly a consequence of `None` for end marker?
+  def prevOf(node: Option[Id]) : Option[Id] = 
+    node match {
+      case None => Some(chars.last.id)
+      case _    => for {
+        prevIndex <- node.flatMap(index).map(_ - 1)
+        if prevIndex >= 0
+      } yield chars(prevIndex).id
+  }
+          
   // ## The parts of this `WString` between `neighs.prev` and `neighs.next`
   // ...but excluding the neighbours themselves.
   def subseq(ns: Neighbours) : Vector[WChar] = {
@@ -112,7 +124,9 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
     
     chars.slice(from,until)  
   }
-  
+
+
+      
   // ## Integrate a `WChar` into the `WString`.
   def insertBetween(c: WChar, ns: Neighbours) : WString = {
       // Precondition: `require(canApply(ns))`  
@@ -121,12 +135,16 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
       subseq(ns) match {
           // - when where's no decision about where, just insert after `prev`:
           // (NB: I believe this could be insert _at_ `ns.next` instead of _after_ `ns.prev`)
-          case Vector() => ins(c, insertIndexAfter(ns.prev))
+          case Vector() => 
+            println(s"* Simple insert of '${c.alpha}' at ${insertIndexAfter(ns.prev)}")
+            ins(c, insertIndexAfter(ns.prev))
           
-          // - when there's a choice, locate an insert point based on the `Id.<`
-          case search => 
-            println(s"Ins($c,$ns) : $search")
-            this
+          // - when there's a choice, locate an insert point based on `Id.<`
+          case search : Vector[WChar] => 
+            println(s"* Integrating ($c,$ns) yields $search")
+            val point = search.sorted.dropWhile(_.id < c.id).headOption.map(_.id)
+            println(s"  Resolved to $point")
+            insertBetween(c, Neighbours(prevOf(point), point))
       }
 
   }
