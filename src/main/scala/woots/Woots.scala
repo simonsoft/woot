@@ -112,15 +112,17 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
       subseq(before, after) match {
           // - when where's no option about where, just insert
           case Vector() => 
-            println(s"* Simple insert of '${c}'")
+            println(s"* Simple insert of '${c.alpha}'")
             ins(c, indexOf(after))
           
           // - when there's a choice, locate an insert point based on `Id.<`
           case search : Vector[WChar] => 
-            println(s"* Integrating ($c) yields $search")
-                        
+            println(s"* Integrating ($c) yields ${search.map(_.alpha)}")
+            
+            println(s"Reduced: ${reduce(search).map(_.alpha)}")
+            
             var i = 1
-            val L : Vector[Id] = before +: search.sorted.map(_.id) :+ after
+            val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
             while (i < (L.length - 1) && L(i) < c.id) i = i + 1 
             
             println(s"  Resolved to $i ${L(i)}")
@@ -128,6 +130,13 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
       }
 
   }
+  
+  private def reduce(cs: Vector[WChar]) : Vector[WChar] = 
+    for { 
+      c <- cs
+      if cs.forall(x => x.id != c.next && x.id != c.prev)
+     // if !cs.exists(x => x.id == c.next || x.id == c.prev)
+    } yield c
   
  
 }
