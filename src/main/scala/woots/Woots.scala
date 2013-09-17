@@ -2,16 +2,20 @@ package woots
 
 import math.{min,max}
 
+// ## References
+// - [RR5580] Oster et al. (2005) _Real time group editors without Operational transformation_, report paper 5580, INRIA.
+// - [CSCW06] Oster et al. (2006) _Data Consistency for P2P Collaborative Editing_, CSCW'06.
+
+// # Each character has an `Id`.
+// An `Id` is usually made up of a `SiteId` and a `ClockValue`, but there are two special cases 
+// called `Beginning` and `Ending`.
+//
+// These special values exist because every character points to the previous and next character `Id`
+// of where it wanted to be inserted. The special values are for the first and last
+// characters to point to.
+
 sealed trait Id {
   def < (that: Id) : Boolean
-}
-
-case class CharId(ns: SiteId, ng: ClockValue) extends Id { 
-  def inc = copy(ng = ng + 1)
-  def < (that: Id) = that match {
-    case CharId(site, clock) => (ns < site) || (ns == site && ng < clock)  
-    case _ => !(that < this)
-  }
 }
 
 object Beginning extends Id {
@@ -22,18 +26,30 @@ object Ending extends Id {
   def < (that: Id) = false
 }
 
+case class CharId(ns: SiteId, ng: ClockValue) extends Id { 
+  // Each new character retains the site id, but increments the logical local clock, making the `Id` unique.
+  def inc = copy(ng = ng + 1)
+  
+  // The `<` comparison is defined in _Definition 7_ (p. 8) of [RR5580]
+  def < (that: Id) = that match {
+    case CharId(site, clock) => (ns < site) || (ns == site && ng < clock)  
+    case Beginning           => false
+    case Ending              => true
+  }
+}
 
 object CharId {
   def genFrom(seed: CharId) : Stream[CharId] = Stream.cons(seed, genFrom(seed.inc))
 }
 
-// TODO: what is the real starting point?
-// private val ids = Id genFrom Id(1,1)
 
-
+// # Characters
+// Currently coded to be a `Char`, but could be a `T`.
 case class WChar(id: Id, alpha: Char, prev: Id, next: Id, isVisible: Boolean = true) 
 
 
+// # String representation
+// Note there there is no `WChar` representation of Beginning and Ending: they are not included in the vector.
 case class WString(chars: Vector[WChar] = Vector.empty) {
 
   private lazy val visible = chars.filter(_.isVisible)
@@ -41,8 +57,8 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
   // ## The visible text
   def text : String = visible.map(_.alpha).mkString
 
-  // ## Insert a `WChar` into the internal vector at position `pos`
-  // NB: position indexed from zero
+  // ## Insert a `WChar` into the internal vector at position `pos`, returning a new `WSring`
+  // Position are indexed from zero
   //
   protected[woots] def ins(char: WChar, pos: Int) : WString = {  
     // - Bound the insert point between 0 and text.length
@@ -53,48 +69,9 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
     WString((before :+ char) ++ after)
   }
 
-  // ## Compute the previous `Id` for a given visible position.
-  // For use when we are going to insert a new character at a
-  // particular position. 
-  // 
-  // For example, given the `WString` "AB":
+  // ## Lookup the position in `chars` of a given `id`
   //
-  //    prevIdAt(0) = Beginning
-  //    prevIdAt(1) = A.id
-  //    prevIdAt(2) = B.id
-  
-  private def prevIdAt(visibleInsertPos: Int) : Id = {
-    require(visibleInsertPos >= 0 && visibleInsertPos <= visible.length)
-    visibleInsertPos match {
-      case 0 => Beginning
-      case n => visible(n-1).id
-    }
-  }
-  
-
-  // ## Compute the next `Id` for a given visible position.
-  // For use when we are going to insert a new character at a
-  // particular position. 
-  // 
-  // For example, given the `WString` "AB":
-  //
-  //    nextIdAt(0) = A.id
-  //    nextIdAt(1) = B.id
-  //    nextIdAt(2) = Ending
-  private def nextIdAt(visibleInsertPos: Int) : Id = {
-    require(visibleInsertPos >= 0 && visibleInsertPos <= visible.length)
-    visibleInsertPos match {
-      case n if n >= visible.length => Ending
-      case n                        => visible(n).id
-    }
-  }
-  
-  private def index(id: Id) : Option[Int] = 
-    chars.indexWhere(_.id == id) match {
-    case -1 => None
-    case n  => Some(n)
-  } 
-  
+  // Note that the `id` is required to exist in the `WString`.
   private def indexOf(id: Id) : Int = {
     val p = id match {
       case Ending => chars.length
@@ -104,56 +81,36 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
     require(p != -1)
     p
   }
-  
-//  // ## Test to see if the conditions for a character insert/update apply
-//  def canApply(ns: Neighbours) : Boolean = {
-//    
-//    // Either:
-//    //
-//    // - the prev (or next) signifies the beginning (or end) position; or
-//    // - the prev (or next) can be found
-//    def canApply(id: Option[Id]) : Boolean =
-//        id.isEmpty || id.flatMap(index).isDefined
-//        
-//    canApply(ns.prev) && canApply(ns.next)
-//  }
-    
-  // ## Compute index just after the location of the `previous` `ID`.
-  //
-  // For example, considering "AB"...
-  //
-  //     inserting X around Beginning = 0
-  //     inserting X around A.id = 1
-  //     inserting X around B.id = 2 (append)
-  private def insertIndexAfter(prev: Id) : Int =
-      index(prev).map(_ + 1) getOrElse 0
+      
                 
   // ## The parts of this `WString` between `prev` and `next`
-  // ...but excluding the neighbours themselves.
+  // ...but excluding the neighbours themselves as required
+  // by the Woot algorithm: see [RR5580] p. 8. 
   private def subseq(prev: Id, next: Id) : Vector[WChar] = {
     // Precondition: `require(canApply(ns))`  
     
     val from = prev match {
       case Beginning => 0
-      case id => chars.indexWhere(_.id == id) + 1
+      case id        => indexOf(id) + 1
     }
      
     val until = next match {
       case Ending => chars.length
-      case id => chars.indexWhere(_.id == id)
+      case id     => indexOf(id)
     } 
     
     chars.slice(from,until)  
   }
 
 
+  // # Integration is the process of merging a `WChar` into a `WString` producing a new `WString`
   def integrate(c: WChar) : WString = integrate(c, c.prev, c.next)
   
   def integrate(c: WChar, before: Id, after: Id) : WString = {
       
       // Looking at all the characters between the previous and next positions:
       subseq(before, after) match {
-          // - when where's no decision about where, just insert
+          // - when where's no option about where, just insert
           case Vector() => 
             println(s"* Simple insert of '${c}'")
             ins(c, indexOf(after))
@@ -172,8 +129,6 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
 
   }
   
-      
-
-
+ 
 }
 
