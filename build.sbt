@@ -12,6 +12,8 @@ unmanagedResourceDirectories in Test <+= (baseDirectory) { _ / "src/main/webapp"
 
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature")
 
+scalacOptions in Test ++= Seq("-Yrangepos")
+
 libraryDependencies ++= {
   val liftVersion = "2.5.1"
   Seq(
@@ -20,7 +22,8 @@ libraryDependencies ++= {
     "org.eclipse.jetty" % "jetty-webapp"        % "8.1.7.v20120910"  % "container,test",
     "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container,test" artifacts Artifact("javax.servlet", "jar", "jar"),
     "ch.qos.logback"    % "logback-classic"     % "1.0.6",
-    "org.specs2" %% "specs2" % "2.1.1" % "test"
+    "org.specs2" %% "specs2" % "2.2.1" % "test",
+    "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
   )
 }
 

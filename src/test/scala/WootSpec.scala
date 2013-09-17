@@ -1,8 +1,12 @@
 package woots
 
 import org.specs2.mutable._
+import scala.util.Random
+import org.specs2.ScalaCheck
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 
-class WootSpec extends Specification {
+class WootSpec extends Specification with ScalaCheck {
 
   "Single User Woot" should {
     
@@ -31,9 +35,8 @@ class WootSpec extends Specification {
     
   }
   
-  "First example of section 3.5 (p. 11)" should {
+  "First example in RR5580 section 3.5 (p. 11)" should {
    
-    val site1 = WString() 
     val site2 = WString()
       
     val o1 = WChar(CharId(1,1), '1', Beginning, Ending)
@@ -52,15 +55,23 @@ class WootSpec extends Specification {
          text must_== "3124"
     }
     
-     "site3 results in 3124" in {
+    "site3 results in 3124" in {
        site3.integrate(o3).
           integrate(o4).
           integrate(o2).
           text must_== "3124"
     }
+
+    implicit def opSeq : Arbitrary[List[WChar]] = Arbitrary {
+      for ( os <- Gen.oneOf( List(o1,o2,o3,o4).permutations.toList ) ) 
+        yield os
+    }
      
-     // TODO: Can we use ScalaCheck to randomly run ops through s1?
-    
+    "site1 results in 3124 regardless of order" ! propNoShrink {
+      (ops: List[WChar]) => 
+        //println(" Trying "+ops.map(_.alpha))
+        ops.foldLeft(new WString)( (s,c) => s integrate c).text must_== "3124" 
+    }
   }
   
 

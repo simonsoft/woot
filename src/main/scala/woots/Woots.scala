@@ -50,7 +50,9 @@ case class WChar(id: Id, alpha: Char, prev: Id, next: Id, isVisible: Boolean = t
 
 // # String representation
 // Note there there is no `WChar` representation of Beginning and Ending: they are not included in the vector.
-case class WString(chars: Vector[WChar] = Vector.empty) {
+case class WString(
+    val chars: Vector[WChar] = Vector.empty, 
+    val queue: Vector[WChar] = Vector.empty) {
 
   private lazy val visible = chars.filter(_.isVisible)
 
@@ -66,7 +68,7 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
 
     // - "Insert" by creating a new vector
     val (before, after) = chars splitAt p
-    WString((before :+ char) ++ after)
+    copy(chars = (before :+ char) ++ after)
   }
 
   // ## Lookup the position in `chars` of a given `id`
@@ -87,7 +89,7 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
   // ...but excluding the neighbours themselves as required
   // by the Woot algorithm: see [RR5580] p. 8. 
   private def subseq(prev: Id, next: Id) : Vector[WChar] = {
-    // Precondition: `require(canApply(ns))`  
+    // Precondition: `require(canIntegrate(ns))`  
     
     val from = prev match {
       case Beginning => 0
@@ -102,40 +104,54 @@ case class WString(chars: Vector[WChar] = Vector.empty) {
     chars.slice(from,until)  
   }
 
+  // # Applicability test
+  private def canIntegrate(c: WChar) : Boolean =
+    canIntegrate(c.next) && canIntegrate(c.prev)
+    
+  private def canIntegrate(id: Id) : Boolean =
+    id == Ending || id == Beginning || chars.exists(_.id == id)
 
-  // # Integration is the process of merging a `WChar` into a `WString` producing a new `WString`
-  def integrate(c: WChar) : WString = integrate(c, c.prev, c.next)
+  // # Waiting integrations
+  // If we cannot currently integrate a character, it goes into a queue.
+  private def enqueue(c: WChar) : WString = copy(queue = queue :+ c)
   
-  def integrate(c: WChar, before: Id, after: Id) : WString = {
+  
+  private def dequeue : WString = {
+    def without(c: WChar) : Vector[WChar] = queue.filterNot(_ == c)
+    queue.find(c => canIntegrate(c)).map(c => copy(queue = without(c)).integrate(c)) getOrElse this
+  } 
+    
+  // # Integration is the process of merging a `WChar` into a `WString` producing a new `WString`
+  def integrate(c: WChar) : WString = {
+    if (canIntegrate(c)) integrate(c, c.prev, c.next)
+    else enqueue(c)
+  }
+  
+  private def integrate(c: WChar, before: Id, after: Id) : WString = {
       
       // Looking at all the characters between the previous and next positions:
       subseq(before, after) match {
           // - when where's no option about where, just insert
           case Vector() => 
-            println(s"* Simple insert of '${c.alpha}'")
-            ins(c, indexOf(after))
-          
+            ins(c, indexOf(after)).dequeue
+                 
           // - when there's a choice, locate an insert point based on `Id.<`
           case search : Vector[WChar] => 
-            println(s"* Integrating ($c) yields ${search.map(_.alpha)}")
-            
-            println(s"Reduced: ${reduce(search).map(_.alpha)}")
             
             var i = 1
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
             while (i < (L.length - 1) && L(i) < c.id) i = i + 1 
             
-            println(s"  Resolved to $i ${L(i)}")
             integrate(c, L(i-1), L(i) )
       }
 
   }
   
+  // See last paragraph of first column of page 5 of CSCW06 (relating to figure 4b)
   private def reduce(cs: Vector[WChar]) : Vector[WChar] = 
     for { 
       c <- cs
       if cs.forall(x => x.id != c.next && x.id != c.prev)
-     // if !cs.exists(x => x.id == c.next || x.id == c.prev)
     } yield c
   
  
