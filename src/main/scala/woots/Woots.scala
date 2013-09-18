@@ -47,12 +47,20 @@ object CharId {
 // Currently coded to be a `Char`, but could be a `T`.
 case class WChar(id: Id, alpha: Char, prev: Id, next: Id, isVisible: Boolean = true) 
 
+// # Operations are inserts or deletes
+sealed trait Operation {
+  def char : WChar
+  def id = char.id
+}
+
+case class InsertOp(override val char : WChar) extends Operation
+case class DeleteOp(override val char : WChar) extends Operation
 
 // # String representation
 // Note there there is no `WChar` representation of Beginning and Ending: they are not included in the vector.
 case class WString(
     val chars: Vector[WChar] = Vector.empty, 
-    val queue: Vector[WChar] = Vector.empty) {
+    val queue: Vector[Operation] = Vector.empty) {
 
   private lazy val visible = chars.filter(_.isVisible)
 
@@ -103,6 +111,9 @@ case class WString(
     
     chars.slice(from,until)  
   }
+  
+
+  
 
   // # Applicability test
   private def canIntegrate(c: WChar) : Boolean =
@@ -113,18 +124,31 @@ case class WString(
 
   // # Waiting integrations
   // If we cannot currently integrate a character, it goes into a queue.
-  private def enqueue(c: WChar) : WString = copy(queue = queue :+ c)
-  
+  private def enqueue(op: Operation) : WString = copy(queue = queue :+ op)
   
   private def dequeue : WString = {
-    def without(c: WChar) : Vector[WChar] = queue.filterNot(_ == c)
-    queue.find(c => canIntegrate(c)).map(c => copy(queue = without(c)).integrate(c)) getOrElse this
+    def without(op: Operation) : Vector[Operation] = queue.filterNot(_ == op)
+    queue.find(op => canIntegrate(op.char)).map(op => copy(queue = without(op)).integrate(op)) getOrElse this
   } 
     
+  // # Delete means making the character invisible.
+  private def hide(c: WChar) : WString = {
+    val p = chars.indexWhere(_.id == c.id)
+    require(p != -1)
+    val replacement =  c.copy(isVisible=false)
+    val (before, rest) = chars splitAt p
+    copy(chars = (before :+ replacement) ++ (rest drop 1) )
+  }
+  
   // # Integration is the process of merging a `WChar` into a `WString` producing a new `WString`
-  def integrate(c: WChar) : WString = {
-    if (canIntegrate(c)) integrate(c, c.prev, c.next)
-    else enqueue(c)
+  def integrate(c: WChar) : WString = integrate(InsertOp(c))
+  
+  def delete(c: WChar) : WString = integrate(DeleteOp(c))
+  
+  private def integrate(op: Operation) : WString = op match {
+    case InsertOp(c) if canIntegrate(c)            => integrate(c, c.prev, c.next)
+    case DeleteOp(c) if chars.exists(_.id == c.id) => hide(c)
+    case _                                         => enqueue(op)
   }
   
   private def integrate(c: WChar, before: Id, after: Id) : WString = {
@@ -154,6 +178,7 @@ case class WString(
       if cs.forall(x => x.id != c.next && x.id != c.prev)
     } yield c
   
- 
+  
+    
 }
 

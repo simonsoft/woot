@@ -74,5 +74,38 @@ class WootSpec extends Specification with ScalaCheck {
     }
   }
   
+  "Deleting" should {
+    val o1 = WChar(CharId(1,1), '1', Beginning, Ending)
+    val o2 = WChar(CharId(2,1), '2', Beginning, Ending)
+    val o3 = WChar(CharId(3,1), '3', Beginning, o1.id)
+    val o4 = WChar(CharId(3,2), '4', o1.id, Ending)
 
+    "mean a character is not visible if removed" in {
+      WString().
+       integrate(o2).
+       integrate(o1).
+       integrate(o3).
+       delete(o2).
+       integrate(o4).
+       text must_== "314"
+    }
+    
+    "mean no characters are left if all are deleted" in {
+      WString().
+       integrate(o2).
+       integrate(o1).
+       integrate(o3).
+       delete(o2).
+       delete(o4).
+       delete(o1).
+       delete(o3).
+       integrate(o4).
+       text must_== ""
+    }
+    
+
+    
+  }
+  
+ 
 }
