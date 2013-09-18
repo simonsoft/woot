@@ -58,6 +58,7 @@ case class DeleteOp(override val char : WChar) extends Operation
 
 // # String representation
 // Note there there is no `WChar` representation of Beginning and Ending: they are not included in the vector.
+// The intention is for this data structure to be immutable: the `integrate` and `delete` operations produce new `WString` instances.
 case class WString(
     val chars: Vector[WChar] = Vector.empty, 
     val queue: Vector[Operation] = Vector.empty) {
@@ -91,8 +92,7 @@ case class WString(
     require(p != -1)
     p
   }
-      
-                
+                   
   // ## The parts of this `WString` between `prev` and `next`
   // ...but excluding the neighbours themselves as required
   // by the Woot algorithm: see [RR5580] p. 8. 
@@ -111,8 +111,6 @@ case class WString(
     
     chars.slice(from,until)  
   }
-  
-
   
 
   // # Applicability test
@@ -143,9 +141,11 @@ case class WString(
   // # Integration is the process of merging a `WChar` into a `WString` producing a new `WString`
   def integrate(c: WChar) : WString = integrate(InsertOp(c))
   
+  // # Deletion hides a character, producing a new `WString`
   def delete(c: WChar) : WString = integrate(DeleteOp(c))
   
-  private def integrate(op: Operation) : WString = op match {
+  // # The more general form for integration or delete
+  def integrate(op: Operation) : WString = op match {
     case InsertOp(c) if canIntegrate(c)            => integrate(c, c.prev, c.next)
     case DeleteOp(c) if chars.exists(_.id == c.id) => hide(c)
     case _                                         => enqueue(op)
@@ -160,13 +160,12 @@ case class WString(
             ins(c, indexOf(after)).dequeue
                  
           // - when there's a choice, locate an insert point based on `Id.<`
-          case search : Vector[WChar] => 
-            
+          case search : Vector[WChar] =>
             var i = 1
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
             while (i < (L.length - 1) && L(i) < c.id) i = i + 1 
             
-            integrate(c, L(i-1), L(i) )
+            integrate(c, L(i-1), L(i))
       }
 
   }

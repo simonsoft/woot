@@ -103,7 +103,24 @@ class WootSpec extends Specification with ScalaCheck {
        text must_== ""
     }
     
-
+    "support the TP2 puzzle (p. 16 of RR5580)" in {
+      val a = WChar(CharId(1,1), 'a', Beginning, Ending)
+      val b = WChar(CharId(1,2), 'b', a.id, Ending)
+      val c = WChar(CharId(1,3), 'c', b.id, Ending)
+      val d = WChar(CharId(1,4), 'd', c.id, Ending)
+     
+      val site = WString().integrate(a).integrate(b).integrate(c).integrate(d)
+      site.text must_== "abcd" 
+             
+      val ops = InsertOp(WChar(CharId(1,5), 'x', c.id, d.id)) ::
+        DeleteOp(b) ::
+        InsertOp(WChar(CharId(3,1), 'y', b.id, c.id)) :: 
+        Nil
+      
+      // Regardless of the order, we should aways get aycxd  
+       ops.foldLeft(site)(_ integrate _).text must_== "aycxd"
+      
+    }
     
   }
   
