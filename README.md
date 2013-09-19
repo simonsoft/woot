@@ -1,8 +1,8 @@
 # An Implementation of WOOT
 
-WOOT is a collaborative text editing algorithm, allowing multiple users ("sites") to insert or delete characters (`WChar`) from a shared document (`WString`). The algorithm preserves the intention of users, and ensuring that the text converges to the same state for all users.
+WOOT is a collaborative text editing algorithm, allowing multiple users ("sites") to insert or delete characters (`WChar`) from a shared document (`WString`). The algorithm preserves the intention of users, and ensures that the text converges to the same state for all users.
 
-It's key properties are simplicity, and avoiding the need for a reliable network or vector clocks.
+Its key properties are simplicity, and avoiding the need for a reliable network or vector clocks (it can be peer-to-peer).
 
 The key references are:
 
