@@ -2,17 +2,9 @@ package woots
 
 import math.{min,max}
 
-// ## References
-// - [RR5580] Oster et al. (2005) _Real time group editors without Operational transformation_, report paper 5580, INRIA.
-// - [CSCW06] Oster et al. (2006) _Data Consistency for P2P Collaborative Editing_, CSCW'06.
-
 // # Each character has an `Id`.
 // An `Id` is usually made up of a `SiteId` and a `ClockValue`, but there are two special cases 
-// called `Beginning` and `Ending`.
-//
-// These special values exist because every character points to the previous and next character `Id`
-// of where it wanted to be inserted. The special values are for the first and last
-// characters to point to.
+// called `Beginning` and `Ending`, because character points to the previous and next character `Id`.
 
 sealed trait Id {
   def < (that: Id) : Boolean
@@ -63,20 +55,16 @@ case class WString(
     val chars: Vector[WChar] = Vector.empty, 
     val queue: Vector[Operation] = Vector.empty) {
 
-  private lazy val visible = chars.filter(_.isVisible)
+  lazy val visible = chars.filter(_.isVisible)
 
   // ## The visible text
   def text : String = visible.map(_.alpha).mkString
-
+  
   // ## Insert a `WChar` into the internal vector at position `pos`, returning a new `WSring`
   // Position are indexed from zero
   //
   protected[woots] def ins(char: WChar, pos: Int) : WString = {  
-    // - Bound the insert point between 0 and text.length
-    val p = min(text.length, max(pos,0))
-
-    // - "Insert" by creating a new vector
-    val (before, after) = chars splitAt p
+    val (before, after) = chars splitAt pos
     copy(chars = (before :+ char) ++ after)
   }
 
@@ -97,7 +85,6 @@ case class WString(
   // ...but excluding the neighbours themselves as required
   // by the Woot algorithm: see [RR5580] p. 8. 
   private def subseq(prev: Id, next: Id) : Vector[WChar] = {
-    // Precondition: `require(canIntegrate(ns))`  
     
     val from = prev match {
       case Beginning => 0
@@ -156,11 +143,13 @@ case class WString(
       // Looking at all the characters between the previous and next positions:
       subseq(before, after) match {
           // - when where's no option about where, just insert
-          case Vector() => 
+          case Vector() =>
             ins(c, indexOf(after)).dequeue
                  
           // - when there's a choice, locate an insert point based on `Id.<`
           case search : Vector[WChar] =>
+            
+            // This lifted straight from `IntegrateIns` p. 11 of RR5580.
             var i = 1
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
             while (i < (L.length - 1) && L(i) < c.id) i = i + 1 
@@ -170,6 +159,8 @@ case class WString(
 
   }
   
+  // Don't consider characters that have a `prev` or `next` in the set of 
+  // locations to consider (i.e., ones that are between the insert points of interest)
   // See last paragraph of first column of page 5 of CSCW06 (relating to figure 4b)
   private def reduce(cs: Vector[WChar]) : Vector[WChar] = 
     for { 
@@ -178,6 +169,5 @@ case class WString(
     } yield c
   
   
-    
 }
 
