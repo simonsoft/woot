@@ -1,14 +1,66 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
-    <title>Home</title>
-  </head>
-  <body class="lift:content_id=main">
-    <div id="main" class="lift:surround?with=default;at=content">
-      <h2>Welcome to your project!</h2>
-      <p>
-	    </div>
-  </body>
-</html>
+<html lang="en">
+<head>
+<title>WOOT in ACE</title>
+<style type="text/css" media="screen">
+    #editor { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+</style>
+</head>
+<body>
 
+<div id="editor">This is ACE in Markdown mode
+============================
+
+We like [ACE](http://ace.c9.io/). 
+
+To run this Lift app, clone the project and:
+
+```
+  $ sbt
+  > container:start
+```
+
+Then visit port 8080 in your browser.
+
+ACE 
+</div>
+    
+<script src="ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/merbivore");
+    editor.getSession().setMode("ace/mode/markdown");
+
+    // Convert ACE "position" (row/column) to WOOT "index":
+    var idx = function(position) {
+        return editor.getSession().getDocument().positionToIndex(position);
+    }
+
+    var len = function(range) {
+        return idx(range.end) - idx(range.start);
+    } 
+
+    // `text` is of arbitrary size: for now we serialize to individual operations:
+    var broadcast = function(op, text, range) {
+        var base = idx(range.start), n = len(range);
+        for(p=0; p<n; p++)
+            broadcast1(op, text[p], base+p);
+    }
+
+    var broadcast1 = function(op, ch, pos) {
+        console.log("BROADCASTING ",op," on ",ch," @ ",pos);
+    }
+
+    editor.getSession().on('change', function(e) {
+        if (e.data.action == "insertText" || e.data.action == "removeText") 
+            broadcast(e.data.action, e.data.text, e.data.range);
+    });
+</script>
+</body>
+</html>
