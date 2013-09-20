@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <title>WOOT in ACE</title>
+
 <style type="text/css" media="screen">
     #editor { 
         position: absolute;
@@ -30,6 +31,18 @@ Then visit port 8080 in your browser.
 
 ACE 
 </div>
+
+
+<script src="jquery-1.10.2.min.js" type="text/javascript" charset="utf-8"></script>
+
+<script data-lift="WootServices" type="text/javascript" charset="utf-8">
+    var wootServer = {
+        send: function() { console.log("Unimplemented send called"); }
+    };
+</script>
+
+<script src="angular/1.0.8/angular.min.js" type="text/javascript" charset="utf-8"></script>
+
     
 <script src="ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
@@ -54,7 +67,9 @@ ACE
     }
 
     var broadcast1 = function(op, ch, pos) {
+        // TODO: Lookup char in model
         console.log("BROADCASTING ",op," on ",ch," @ ",pos);
+        wootServer.send();
     }
 
     editor.getSession().on('change', function(e) {

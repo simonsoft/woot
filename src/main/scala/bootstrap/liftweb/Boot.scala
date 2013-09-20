@@ -6,11 +6,7 @@ import Helpers._
 
 import common._
 import http._
-import js.jquery.JQueryArtifacts
 import sitemap._
-
-import net.liftmodules.JQueryModule
-
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -27,15 +23,9 @@ class Boot {
       Menu.i("Home") / "index"
       )
 
-
     // set the sitemap.  Note if you don't want access control for
     // each page, just comment this line out.
     LiftRules.setSiteMapFunc(() => sitemap)
-
-    //Init the jQuery module, see http://liftweb.net/jquery for more information.
-    LiftRules.jsArtifacts = JQueryArtifacts
-    JQueryModule.InitParam.JQuery=JQueryModule.JQuery191
-    JQueryModule.init()
 
     //Show the spinny image when an Ajax call starts
     LiftRules.ajaxStart =
