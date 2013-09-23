@@ -1,7 +1,6 @@
 package woots
 
 import org.specs2.mutable._
-import scala.util.Random
 import org.specs2.ScalaCheck
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
