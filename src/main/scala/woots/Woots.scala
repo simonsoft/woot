@@ -60,7 +60,7 @@ case class WString(
   // ## The visible text
   def text : String = visible.map(_.alpha).mkString
   
-  // ## Insert a `WChar` into the internal vector at position `pos`, returning a new `WSring`
+  // ## Insert a `WChar` into the internal vector at position `pos`, returning a new `WString`
   // Position are indexed from zero
   //
   protected[woots] def ins(char: WChar, pos: Int) : WString = {  
