@@ -1,81 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>WOOT in ACE</title>
+  <title>WOOT in ACE</title>
 
-<style type="text/css" media="screen">
-    #editor { 
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
+  <style type="text/css" media="screen">
+    #editor {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
     }
-</style>
+  </style>
 </head>
 <body>
 
-<div id="editor">This is ACE in Markdown mode
-============================
-
-We like [ACE](http://ace.c9.io/). 
-
-To run this Lift app, clone the project and:
-
-```
-  $ sbt
-  > container:start
-```
-
-Then visit port 8080 in your browser.
-
-ACE 
-</div>
-
+<div id="editor"></div>
 
 <script src="jquery-1.10.2.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="underscore-min.js" type="text/javascript" charset="utf-8"></script>
+<script src="angular/1.0.8/angular.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="wootmodel.js" type="text/javascript" charset="utf-8"></script>
 
 <script data-lift="WootServices" type="text/javascript" charset="utf-8">
-    var wootServer = {
-        send: function() { console.log("Unimplemented send called"); }
-    };
+  var wootServer = {
+    send: function() { console.log("Unimplemented send called"); }
+  };
 </script>
 
-<script src="angular/1.0.8/angular.min.js" type="text/javascript" charset="utf-8"></script>
 
-    
+
 <script src="ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-    var editor = ace.edit("editor");
-    editor.setTheme("ace/theme/merbivore");
-    editor.getSession().setMode("ace/mode/markdown");
+  var editor = ace.edit("editor");
+  editor.setTheme("ace/theme/merbivore");
+  editor.getSession().setMode("ace/mode/markdown");
 
-    // Convert ACE "position" (row/column) to WOOT "index":
-    var idx = function(position) {
-        return editor.getSession().getDocument().positionToIndex(position);
-    }
+  var model = new WOOT.WString(1,1);
 
-    var len = function(range) {
-        return idx(range.end) - idx(range.start);
-    } 
+  // Convert ACE "position" (row/column) to WOOT "index":
+  var idx = function(position) {
+    return editor.getSession().getDocument().positionToIndex(position);
+  };
 
-    // `text` is of arbitrary size: for now we serialize to individual operations:
-    var broadcast = function(op, text, range) {
-        var base = idx(range.start), n = len(range);
-        for(p=0; p<n; p++)
-            broadcast1(op, text[p], base+p);
-    }
+  // `text` is of arbitrary size: for now we serialize to individual operations:
+  var broadcast = function(op, text, range) {
+    var base = idx(range.start), len = (idx(range.end) - base);
+    for(var p=0; p<len; p++)
+      broadcast1(op, text[p], base+p);
+  };
 
-    var broadcast1 = function(op, ch, pos) {
-        // TODO: Lookup char in model
-        console.log("BROADCASTING ",op," on ",ch," @ ",pos);
-        wootServer.send();
-    }
+  var broadcast1 = function(op, ch, pos) {
+    console.log("BROADCASTING ",op," on ",ch," @ ",pos);
+    var wchar = model.localIntegrate({op: op, alpha: ch}, pos);
+    console.log(wchar);
+    wootServer.send();
+  };
 
-    editor.getSession().on('change', function(e) {
-        if (e.data.action == "insertText" || e.data.action == "removeText") 
-            broadcast(e.data.action, e.data.text, e.data.range);
-    });
+  var normalizeOpName = function(aceEventName) {
+    return aceEventName === "insertText" ? "ins" : "del" ;
+  };
+
+  editor.getSession().on('change', function(e) {
+    if (e.data.action == "insertText" || e.data.action == "removeText")
+      broadcast(normalizeOpName(e.data.action), e.data.text, e.data.range);
+  });
 </script>
 </body>
 </html>
