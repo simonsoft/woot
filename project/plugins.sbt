@@ -1,4 +1,6 @@
-addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "0.4.1")
+resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/groups/public"
+
+addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "0.4.2")
 
 //Enable the sbt idea plugin
 addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.5.1")
