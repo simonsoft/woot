@@ -24,46 +24,71 @@
 
 <script data-lift="WootServices" type="text/javascript" charset="utf-8">
   var wootServer = {
-    send: function() { console.log("Unimplemented send called"); }
+    send: function(wchar) { console.log("Unimplemented send called", wchar); },
+    init: function(config) { console.log("Unimplemented init called", config); return $.Deferred().promise(); }
   };
 </script>
 
-
-
 <script src="ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-  var editor = ace.edit("editor");
-  editor.setTheme("ace/theme/merbivore");
-  editor.getSession().setMode("ace/mode/markdown");
+  $(function() {
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/merbivore");
+    editor.getSession().setMode("ace/mode/markdown");
 
-  var model = new WOOT.WString(1,1);
 
-  // Convert ACE "position" (row/column) to WOOT "index":
-  var idx = function(position) {
-    return editor.getSession().getDocument().positionToIndex(position);
-  };
+    function isDefined(v) { return !(_.isUndefined(v)); };
 
-  // `text` is of arbitrary size: for now we serialize to individual operations:
-  var broadcast = function(op, text, range) {
-    var base = idx(range.start), len = (idx(range.end) - base);
-    for(var p=0; p<len; p++)
-      broadcast1(op, text[p], base+p);
-  };
+    function isDocumentMessage(v) { return isDefined(v.chars); };
 
-  var broadcast1 = function(op, ch, pos) {
-    console.log("BROADCASTING ",op," on ",ch," @ ",pos);
-    var wchar = model.localIntegrate({op: op, alpha: ch}, pos);
-    console.log(wchar);
-    wootServer.send();
-  };
+    function isOpToIntegrate(v,model) {
+      return v.id && v.id.site !== model.site;
+    };
 
-  var normalizeOpName = function(aceEventName) {
-    return aceEventName === "insertText" ? "ins" : "del" ;
-  };
+    // The handler will first be called with a WString, and from then on just with an operation
+    var messageHandler = function(v) {
+      console.log("HANDING  ", v);
+      if (isDocumentMessage(v)) model.init(v.site, v.clockValue, v.chars, v.queue);
+      else if (isOpToIntegrate(v,model)) model.remoteIntegrate(v);
+      else console.log("Ignoring ", v);
+    };
 
-  editor.getSession().on('change', function(e) {
-    if (e.data.action == "insertText" || e.data.action == "removeText")
-      broadcast(normalizeOpName(e.data.action), e.data.text, e.data.range);
+    var shutdownHandler = function() {
+      console.log("Remote is done");
+    };
+
+    // TODO: would it be better if model was created, somehow, during wootServer.init?
+
+    var model = new WOOT.WString(1, 1);
+    wootServer.init({ name: "shared doc 1"}).then(messageHandler).done(shutdownHandler);
+
+    // Convert ACE "position" (row/column) to WOOT "index":
+    var idx = function(position) {
+      return editor.getSession().getDocument().positionToIndex(position);
+    };
+
+    // `text` is of arbitrary size: for now we serialize to individual operations:
+    var broadcast = function(op, text, range) {
+      var base = idx(range.start), len = (idx(range.end) - base);
+      for(var p=0; p<len; p++)
+        broadcast1(op, text[p], base+p);
+    };
+
+    var broadcast1 = function(op, ch, pos) {
+      console.log("BROADCASTING ",op," on ",ch," @ ",pos);
+      var wchar = model.localIntegrate({op: op, alpha: ch}, pos);
+      wootServer.send(wchar);
+    };
+
+    var normalizeOpName = function(aceEventName) {
+      return aceEventName === "insertText" ? "ins" : "del" ;
+    };
+
+    editor.getSession().on('change', function(e) {
+      if (e.data.action == "insertText" || e.data.action == "removeText")
+        broadcast(normalizeOpName(e.data.action), e.data.text, e.data.range);
+    });
+
   });
 </script>
 </body>

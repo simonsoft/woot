@@ -17,15 +17,15 @@
 
   WString.fn = WString.prototype = {
 
-    init: function (siteId, initClockValue) {
-      this.siteId = siteId;
+    init: function (site, initClockValue, cs, qs) {
+      this.site = site;
       this.clockValue = initClockValue;
-      this.queue = [];
-      this.chars = [];
+      this.chars = cs || [];
+      this.queue = qs || [];
     },
 
     genId: function() {
-      return { site: this.siteId, clock: this.tick() };
+      return { site: this.site, clock: this.tick() };
     },
 
     endingId: function() {
@@ -69,8 +69,8 @@
       else return _.indexOf(_.pluck(this.chars,'id'), id);
     },
 
-    integrate: function (op) {
-      console.log("INTEGRATING ", op);
+    remoteIntegrate: function (op) {
+      console.log("INTEGRATION OF REMOTE OP ", op);
       return op;
     },
 
@@ -82,7 +82,7 @@
 
         // Generate a new wchar:
         var prevId = this.prevOf(pos), nextId = this.nextOf(pos);
-        var wchar = _.extend(op, {
+        var newChar = _.extend(op, {
           id: this.genId(),
           prev: prevId,
           next: nextId,
@@ -90,17 +90,17 @@
         });
 
         // Insert the wchar locally (mutate):
-        this.chars.splice(this.indexOf(nextId), 0, wchar);
+        this.chars.splice(this.indexOf(nextId), 0, newChar);
 
         console.log(this.asString());
-        return wchar;
+        return newChar;
 
       } else if (op.op === "del") {
         console.log("LOCAL DEL ", op, " at ", pos);
-        var wchar = this.ithVisible(pos);
-        wchar.isVisible = false; // mutate
+        var existingChar = this.ithVisible(pos);
+        existingChar.isVisible = false; // mutate
         console.log(this.asString());
-        return wchar;
+        return existingChar;
       }
 
 
