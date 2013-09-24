@@ -42,7 +42,7 @@
     function isDocumentMessage(v) { return isDefined(v.chars); };
 
     function isOpToIntegrate(v,model) {
-      return v.id && v.id.site !== model.site;
+      return v.wchar && v.wchar.id && v.wchar.id.site !== model.site;
     };
 
     // The handler will first be called with a WString, and from then on just with an operation
@@ -76,8 +76,8 @@
 
     var broadcast1 = function(op, ch, pos) {
       console.log("BROADCASTING ",op," on ",ch," @ ",pos);
-      var wchar = model.localIntegrate({op: op, alpha: ch}, pos);
-      wootServer.send(wchar);
+      var op = model.localIntegrate(op, ch, pos);
+      wootServer.send(op);
     };
 
     var normalizeOpName = function(aceEventName) {

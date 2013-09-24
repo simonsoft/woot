@@ -15,13 +15,39 @@
   };
 
 
+  /*
+   Wire formats:
+
+   ID
+   {
+    site: N,
+    clock: N
+   }
+
+   WCHAR
+   {
+    id: ID,
+    alpha: "X",
+    isVisible: true,
+    prev: ID,
+    next: ID
+   }
+
+   OPERATION:
+    {
+      op: "ins" (or "del"),
+      wchar: WCHAR
+    }
+
+  */
+
   WString.fn = WString.prototype = {
 
     init: function (site, initClockValue, cs, qs) {
       this.site = site;
       this.clockValue = initClockValue;
-      this.chars = cs || [];
-      this.queue = qs || [];
+      this.chars = cs || [];  // Stores WCHAR structures
+      this.queue = qs || [];  // Stores OPERATION structures
     },
 
     genId: function() {
@@ -69,47 +95,91 @@
       else return _.indexOf(_.pluck(this.chars,'id'), id);
     },
 
-    remoteIntegrate: function (op) {
+    remoteIntegrate: function(op) {
       console.log("INTEGRATION OF REMOTE OP ", op);
+      if (op.op === "ins" && this.canIntegrate(op.wchar)) this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next)
+      else if (op.op === "del" && this.canIntegrateId(op.char.id)) this.hide(op.char.id)
+      else {
+        console.log("Queueing");
+        this.queue.push(op); // mutate
+      }
       return op;
+    },
+
+    subseq: function(prev,next) {
+      var from = prev === this.beginningId() ? 0 : this.indexOf(prev) + 1,
+          until = next === this.endingId() ? this.chars.length : this.indexOf(next);
+        return this.chars.slice(from,until);
+    },
+
+    // TODO: this does not work. index of is -1 for a site/clock that exists in char
+    canIntegrateId: function(id) {
+      console.log("Checing can integrate on ",id, " results in ", this.indexOf(id));
+      return this.indexOf(id) != -1;
+    },
+
+    canIntegrate: function(wchar) {
+      return this.canIntegrateId(wchar.next) && this.canIntegrateId(wchar.prev);
+    },
+
+    ins: function(wchar, pos) {
+      console.log("Insert ", wchar, " at ", pos);
+      this.chars.splice(pos, 0, wchar); // mutate
+
+      console.log(this.chars);
+      console.log(this.asString());
+      // TODO: try to dequeue
+
+    },
+
+    hide: function(id) {
+      this.chars[this.indexOf(id)].isVisible = false; // mutate
+    },
+
+    // mutate
+    integrateIns: function(wchar, prev, next) {
+     console.log("INTEGRATE INS");
+      var s = this.subseq(prev,next);
+      if (_.isEmpty(s)) this.ins(wchar, this.indexOf(next));
+      else {
+        console.log("IT'S A BIT MORE COMPLICATED"); //TODO
+      }
     },
 
     // Generate a WChar, such as:
     // { op: "ins", alpha: "x", id: { site:1, clock: 13}, prev: { site: 1, clock: 11 }, next: { ending: true } }
-    localIntegrate: function (op, pos) {
-      if (op.op === "ins") {
-        console.log("LOCAL INS ",op, " at ",pos);
+    localIntegrate: function (op, ch, pos) {
+      if (op === "ins") {
+        console.log("LOCAL INS ", ch, " at ", pos);
 
         // Generate a new wchar:
         var prevId = this.prevOf(pos), nextId = this.nextOf(pos);
-        var newChar = _.extend(op, {
+        var newChar = {
+          alpha: ch,
           id: this.genId(),
           prev: prevId,
           next: nextId,
           isVisible: true
-        });
+        };
 
         // Insert the wchar locally (mutate):
         this.chars.splice(this.indexOf(nextId), 0, newChar);
 
         console.log(this.asString());
-        return newChar;
+        return { op: "ins", wchar: newChar };
 
-      } else if (op.op === "del") {
-        console.log("LOCAL DEL ", op, " at ", pos);
+      } else if (op === "del") {
+        console.log("LOCAL DEL ", ch, " at ", pos);
         var existingChar = this.ithVisible(pos);
         existingChar.isVisible = false; // mutate
         console.log(this.asString());
         return existingChar;
       }
 
-
     }
-
 
   };
 
   WString.fn.init.prototype = WString.fn;
-
 
 }(window, document));
