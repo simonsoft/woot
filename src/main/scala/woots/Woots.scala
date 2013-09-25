@@ -1,7 +1,5 @@
 package woots
 
-import math.{min,max}
-
 // # Each character has an `Id`.
 // An `Id` is usually made up of a `SiteId` and a `ClockValue`, but there are two special cases 
 // called `Beginning` and `Ending`, because character points to the previous and next character `Id`.
@@ -52,8 +50,8 @@ case class DeleteOp(override val char : WChar) extends Operation
 // Note there there is no `WChar` representation of Beginning and Ending: they are not included in the vector.
 // The intention is for this data structure to be immutable: the `integrate` and `delete` operations produce new `WString` instances.
 case class WString(
-    val chars: Vector[WChar] = Vector.empty, 
-    val queue: Vector[Operation] = Vector.empty) {
+    chars: Vector[WChar] = Vector.empty,
+    queue: Vector[Operation] = Vector.empty) {
 
   lazy val visible = chars.filter(_.isVisible)
 

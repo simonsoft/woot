@@ -1,3 +1,53 @@
+/*
+An implementation of WOOT, providing just the model and integration functions.  You need to
+wire this into your own editor and transport mechanism.
+
+Requires on underscore.js
+
+Example usage:
+
+// Empty model for site 1, clock value 0.
+var model = WOOT.WString(1, 0)
+
+// Locally insert "A" at position 0.
+// This returns an operation you can send to your peers.
+var op = model.localIntegrate("A", "A", 0);
+
+The data structures of interest:
+
+ ID
+ {
+ site: N,
+ clock: N
+ }
+
+ WCHAR
+ {
+ id: ID,
+ alpha: "X",
+ isVisible: true,
+ prev: ID,
+ next: ID
+ }
+
+ OPERATION:
+ {
+ op: "ins" (or "del"),
+ wchar: WCHAR
+ }
+
+
+// If you receive an operation:
+model.remoteIntegrate(op);
+
+This will update the model, possibly adding the operation to
+a local queue if it cannot be applied yet.
+
+Queue operations are automatically tested on any remoteIntegrate call.
+
+See src/test/javascript/WootModelSpec.js for more usage.
+
+ */
 (function (window, document) {
 
   var oldWOOT = window.WOOT, WOOT = {};
@@ -15,31 +65,6 @@
   };
 
 
-  /*
-   Wire formats:
-
-   ID
-   {
-    site: N,
-    clock: N
-   }
-
-   WCHAR
-   {
-    id: ID,
-    alpha: "X",
-    isVisible: true,
-    prev: ID,
-    next: ID
-   }
-
-   OPERATION:
-    {
-      op: "ins" (or "del"),
-      wchar: WCHAR
-    }
-
-  */
 
   WString.fn = WString.prototype = {
 
@@ -89,18 +114,27 @@
       else return this.ithVisible(visiblePos).id; // Not +1 because we are inserting just before this char
     },
 
-    idsEqual: function(a) {
-      return function(b) {
-        return a.site === b.site && a.clock === b.clock;
-      }
+    idLessThan: function(a,b) {
+      if (a.beginning && b.beginning || a.ending && b.ending) return false;
+      else return (
+        b.beginning ? false :
+          a.beginning ? true :
+            b.ending ? true :
+              a.ending ? false :
+                (a.site < b.site) || (a.site === b.site && a.clock < b.clock) );
     },
 
+    // The index into `chars` of the given ID; or -1 if not found.
     indexOf: function(id) {
       if (id.beginning) return 0;
       else if (id.ending) return this.chars.length;
-      else return this.indexWhere(_.pluck(this.chars,'id'), this.idsEqual(id));
+      else return this.indexWhere(_.pluck(this.chars,'id'), function(a) {
+          return (a.site === id.site && a.clock === id.clock);
+        });
     },
 
+    // The first index in `col` where `pred` is true for an element of `col`; or -1 otherwise.
+    // pred : id => boolean
     indexWhere: function(col, pred) {
       if (false === _.isEmpty(col))
         for (var i=0; i < col.length; i++)
@@ -117,17 +151,16 @@
         console.log("Queueing");
         this.queue.push(op); // mutate
       }
-      return op;
+      return this;
     },
 
     subseq: function(prev,next) {
-      var from = prev === this.beginningId() ? 0 : this.indexOf(prev) + 1,
-          until = next === this.endingId() ? this.chars.length : this.indexOf(next);
-        return this.chars.slice(from,until);
+      var from = prev.beginning ? 0 : this.indexOf(prev) + 1,
+          until = next.ending ? this.chars.length : this.indexOf(next);
+       return this.chars.slice(from,until);
     },
 
     canIntegrateId: function(id) {
-      console.log("Checking can integrate on ",id, " results in ", this.indexOf(id));
       return this.indexOf(id) != -1;
     },
 
@@ -139,8 +172,6 @@
       console.log("Insert ", wchar, " at ", pos);
       this.chars.splice(pos, 0, wchar); // mutate
 
-      console.log(this.chars);
-      console.log(this.asString());
       // TODO: try to dequeue
 
     },
@@ -149,21 +180,38 @@
       this.chars[this.indexOf(id)].isVisible = false; // mutate
     },
 
-    // mutate
-    integrateIns: function(wchar, prev, next) {
-     console.log("INTEGRATE INS");
-      var s = this.subseq(prev,next);
-      if (_.isEmpty(s)) this.ins(wchar, this.indexOf(next));
+    integrateIns: function(wchar, before, after) {
+      var s = this.subseq(before, after);
+      if (_.isEmpty(s)) this.ins(wchar, this.indexOf(after));
       else {
-        console.log("IT'S A BIT MORE COMPLICATED"); //TODO
+
+        var L = [before].concat(_.pluck(this.reduce(s),'id'));
+        L.push(after);
+
+        var i = 1;
+        while (i < (L.length-1) && this.idLessThan(L[i],wchar.id)) i++;
+
+      this.integrateIns(wchar, L[i-1], L[i]);
       }
     },
 
-    // Generate a WChar, such as:
-    // { op: "ins", alpha: "x", id: { site:1, clock: 13}, prev: { site: 1, clock: 11 }, next: { ending: true } }
+    reduce: function(cs) {
+
+      function idNotEqual(a,b) {
+       return (a.beginning && b.beginning) ? false :
+          (a.ending && b.ending) ? false :
+            (a.site != b.site || a.clock != b.clock);
+      };
+
+      return _.filter(cs, function(c) {
+        return _.every(cs, function(x) {
+          return idNotEqual(x.id, c.next) && idNotEqual(x.id, c.prev);
+        })
+      })
+    },
+
     localIntegrate: function (op, ch, pos) {
       if (op === "ins") {
-        console.log("LOCAL INS ", ch, " at ", pos);
 
         // Generate a new wchar:
         var prevId = this.prevOf(pos), nextId = this.nextOf(pos);
@@ -182,7 +230,6 @@
         return { op: "ins", wchar: newChar };
 
       } else if (op === "del") {
-        console.log("LOCAL DEL ", ch, " at ", pos);
         var existingChar = this.ithVisible(pos);
         existingChar.isVisible = false; // mutate
         console.log(this.asString());

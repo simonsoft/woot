@@ -1,3 +1,5 @@
+// Reference: http://pivotal.github.io/jasmine/
+
 describe("WOOT Model", function() {
 
   it("should be able to locally insert characters", function() {
@@ -34,7 +36,91 @@ describe("WOOT Model", function() {
       expect(model.indexOf({ site: 10, clock: 2}) ).toEqual(-1);
     });
 
+  });
 
+  describe("can compare IDs via Less Than", function() {
+
+    var model = new WOOT.WString(1, 1);
+
+    it("Beginning < Ending = true", function() {
+      expect(model.idLessThan(model.beginningId(), model.endingId())).toBe(true);
+    });
+
+    it("Beginning < Beginning = false", function() {
+      expect(model.idLessThan(model.beginningId(), model.beginningId())).toBe(false);
+    });
+
+    it("Ending < Beginning = false", function() {
+      expect(model.idLessThan(model.endingId(), model.beginningId())).toBe(false);
+    });
+
+    it("Ending < Ending = false", function() {
+      expect(model.idLessThan(model.endingId(), model.endingId())).toBe(false);
+    });
+
+    var site1clock1 = { site: 1, clock: 1 };
+
+    it("Beginning < ID = true", function() {
+      expect(model.idLessThan(model.beginningId(), site1clock1)).toBe(true);
+    });
+
+    it("ID < Beginning = false", function() {
+      expect(model.idLessThan(site1clock1, model.beginningId())).toBe(false);
+    });
+
+    it("ID < Ending = true", function() {
+      expect(model.idLessThan(site1clock1, model.endingId())).toBe(true);
+    });
+
+    it("Ending < ID = false", function() {
+      expect(model.idLessThan(model.endingId(),site1clock1)).toBe(false);
+    });
+
+  });
+
+  describe("should support example 1 from section 3.5 of WOOT research paper (RR-5580)", function() {
+
+    var site1 = new WOOT.WString(1, 1);
+    var site2 = new WOOT.WString(2, 1);
+    var site3 = new WOOT.WString(3, 1);
+
+    var op1 = site1.localIntegrate("ins", "1", 0);
+    var op2 = site2.localIntegrate("ins", "2", 0);
+
+
+    site3.remoteIntegrate(op1);
+    var op3 = site3.localIntegrate("ins", "3", 0);
+    var op4 = site3.localIntegrate("ins", "4", 2);
+
+
+    it("local integrate should return an OPERATION object", function() {
+      expect(op1).toEqual({
+        op: 'ins',
+        wchar: {
+          alpha: '1',
+          id: { site:1, clock:2 },
+          prev: { beginning: true },
+          next: { ending: true },
+          isVisible: true
+        }
+      });
+    });
+
+    it("site3 results in 3124", function() {
+      expect(site3.asString()).toBe("314");
+      expect(site1.idLessThan(op1.wchar.id, op2.wchar.id)).toBe(true);
+
+      site3.remoteIntegrate(op2);
+      expect(site3.asString()).toBe("3124");
+    });
+
+    it("site2 results in 3124", function() {
+      site2.remoteIntegrate(op1);
+      site2.remoteIntegrate(op3);
+      site2.remoteIntegrate(op4);
+      expect(site2.asString()).toBe("3124");
+
+    });
 
   });
 
