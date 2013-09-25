@@ -114,7 +114,7 @@
 
     // TODO: this does not work. index of is -1 for a site/clock that exists in char
     canIntegrateId: function(id) {
-      console.log("Checing can integrate on ",id, " results in ", this.indexOf(id));
+      console.log("Checking can integrate on ",id, " results in ", this.indexOf(id));
       return this.indexOf(id) != -1;
     },
 
