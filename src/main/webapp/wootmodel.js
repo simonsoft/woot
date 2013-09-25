@@ -72,7 +72,7 @@
     },
 
     asString: function() {
-      return  _.pluck(this.visible(), 'alpha').join();
+      return  _.pluck(this.visible(), 'alpha').join("");
     },
 
     ithVisible: function(i) {
@@ -89,10 +89,24 @@
       else return this.ithVisible(visiblePos).id; // Not +1 because we are inserting just before this char
     },
 
+    idsEqual: function(a) {
+      return function(b) {
+        return a.site === b.site && a.clock === b.clock;
+      }
+    },
+
     indexOf: function(id) {
       if (id.beginning) return 0;
       else if (id.ending) return this.chars.length;
-      else return _.indexOf(_.pluck(this.chars,'id'), id);
+      else return this.indexWhere(_.pluck(this.chars,'id'), this.idsEqual(id));
+    },
+
+    indexWhere: function(col, pred) {
+      if (false === _.isEmpty(col))
+        for (var i=0; i < col.length; i++)
+          if (pred(col[i])) return i;
+
+      return -1;
     },
 
     remoteIntegrate: function(op) {
@@ -112,7 +126,6 @@
         return this.chars.slice(from,until);
     },
 
-    // TODO: this does not work. index of is -1 for a site/clock that exists in char
     canIntegrateId: function(id) {
       console.log("Checking can integrate on ",id, " results in ", this.indexOf(id));
       return this.indexOf(id) != -1;
