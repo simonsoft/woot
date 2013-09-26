@@ -1,9 +1,13 @@
 // Reference: http://pivotal.github.io/jasmine/
 
+define(
+  ['wootmodel'],
+  function (WString) {
+
 describe("WOOT Model", function() {
 
   it("should be able to locally insert characters", function() {
-    var model = new WOOT.WString(1, 1);
+    var model = new WString(1, 1);
     model.localIntegrate("ins", "A", 0);
     model.localIntegrate("ins", "C", 1);
     model.localIntegrate("ins", "B", 1);
@@ -12,7 +16,7 @@ describe("WOOT Model", function() {
 
   describe("should be able to locate IDs", function() {
 
-    var model = new WOOT.WString(1, 1);
+    var model = new WString(1, 1);
     model.localIntegrate("ins", "A", 0);
     model.localIntegrate("ins", "C", 1);
     model.localIntegrate("ins", "B", 1);
@@ -40,7 +44,7 @@ describe("WOOT Model", function() {
 
   describe("can compare IDs via Less Than", function() {
 
-    var model = new WOOT.WString(1, 1);
+    var model = new WString(1, 1);
 
     it("Beginning < Ending = true", function() {
       expect(model.idLessThan(model.beginningId(), model.endingId())).toBe(true);
@@ -80,9 +84,9 @@ describe("WOOT Model", function() {
 
   describe("should support example 1 from section 3.5 of WOOT research paper (RR-5580)", function() {
 
-    var site1 = new WOOT.WString(1, 1);
-    var site2 = new WOOT.WString(2, 1);
-    var site3 = new WOOT.WString(3, 1);
+    var site1 = new WString(1, 1);
+    var site2 = new WString(2, 1);
+    var site3 = new WString(3, 1);
 
     var op1 = site1.localIntegrate("ins", "1", 0);
     var op2 = site2.localIntegrate("ins", "2", 0);
@@ -129,8 +133,8 @@ describe("WOOT Model", function() {
 
   describe("Deleting", function() {
 
-    var site1 = new WOOT.WString(1, 1);
-    var site2 = new WOOT.WString(2, 1);
+    var site1 = new WString(1, 1);
+    var site2 = new WString(2, 1);
 
     var op1 = site1.localIntegrate("ins", "A", 0);
     site2.remoteIntegrate(op1);
@@ -160,13 +164,13 @@ describe("WOOT Model", function() {
     it("should queue and later apply operations that cannot immediately complete", function() {
 
       // Create an insert and delete...
-      var site1 = new WOOT.WString(1, 1);
+      var site1 = new WString(1, 1);
       var ins = site1.localIntegrate("ins", "A", 0);
       var del = site1.localIntegrate("del", "A", 0)
       expect(site1.asString()).toBe("");
 
       // ...and apply in the wrong order on another site:
-      var site2 = new WOOT.WString(2, 1);
+      var site2 = new WString(2, 1);
       site2.remoteIntegrate(del);
       site2.remoteIntegrate(ins);
       expect(site2.asString()).toBe("");
@@ -177,3 +181,5 @@ describe("WOOT Model", function() {
 
 
 });
+
+  });
