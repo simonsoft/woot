@@ -125,4 +125,55 @@ describe("WOOT Model", function() {
   });
 
 
+
+
+  describe("Deleting", function() {
+
+    var site1 = new WOOT.WString(1, 1);
+    var site2 = new WOOT.WString(2, 1);
+
+    var op1 = site1.localIntegrate("ins", "A", 0);
+    site2.remoteIntegrate(op1);
+
+    var op2 = site1.localIntegrate("del", "A", 0)
+
+    it("should return an OPERATION representation", function() {
+      expect(op2).toEqual({
+        op: "del",
+        wchar: {
+          alpha : 'A',
+          id : { site : 1, clock : 2 },
+          prev : { beginning : true },
+          next : { ending : true },
+          isVisible : false }
+      });
+    });
+
+    it("should make a character invisible", function() {
+      expect(site1.asString()).toBe("");
+     console.log(site2);
+      expect(site2.asString()).toBe("A");
+      site2.remoteIntegrate(op2);
+      expect(site2.asString()).toBe("");
+    });
+
+    it("should queue and later apply operations that cannot immediately complete", function() {
+
+      // Create an insert and delete...
+      var site1 = new WOOT.WString(1, 1);
+      var ins = site1.localIntegrate("ins", "A", 0);
+      var del = site1.localIntegrate("del", "A", 0)
+      expect(site1.asString()).toBe("");
+
+      // ...and apply in the wrong order on another site:
+      var site2 = new WOOT.WString(2, 1);
+      site2.remoteIntegrate(del);
+      site2.remoteIntegrate(ins);
+      expect(site2.asString()).toBe("");
+    });
+
+
+  });
+
+
 });

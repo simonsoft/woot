@@ -2,7 +2,7 @@
 An implementation of WOOT, providing just the model and integration functions.  You need to
 wire this into your own editor and transport mechanism.
 
-Requires on underscore.js
+Depends on underscore.js
 
 Example usage:
 
@@ -11,7 +11,7 @@ var model = WOOT.WString(1, 0)
 
 // Locally insert "A" at position 0.
 // This returns an operation you can send to your peers.
-var op = model.localIntegrate("A", "A", 0);
+var op = model.localIntegrate("ins", "A", 0);
 
 The data structures of interest:
 
@@ -134,7 +134,7 @@ See src/test/javascript/WootModelSpec.js for more usage.
     },
 
     // The first index in `col` where `pred` is true for an element of `col`; or -1 otherwise.
-    // pred : id => boolean
+    // pred : Id => Boolean
     indexWhere: function(col, pred) {
       if (false === _.isEmpty(col))
         for (var i=0; i < col.length; i++)
@@ -143,11 +143,16 @@ See src/test/javascript/WootModelSpec.js for more usage.
       return -1;
     },
 
-    remoteIntegrate: function(op) {
+    // op => WString
+    remoteIntegrate: function(rop) {
+      // Clone to avoid sharing state between different instances of WString in the same JS interpreter
+      var op = { op: rop.op, wchar: _.clone(rop.wchar) };
       console.log("INTEGRATION OF REMOTE OP ", op);
-      if (op.op === "ins" && this.canIntegrate(op.wchar)) this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next)
-      else if (op.op === "del" && this.canIntegrateId(op.char.id)) this.hide(op.char.id)
-      else {
+      if (this.canIntegrateOp(op)) {
+        if (op.op === "ins") this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next)
+        else if (op.op == "del") this.hide(op.wchar.id)
+        else console.log("ERR: Unrecognised op:", op.op, op);
+      } else {
         console.log("Queueing");
         this.queue.push(op); // mutate
       }
@@ -160,19 +165,40 @@ See src/test/javascript/WootModelSpec.js for more usage.
        return this.chars.slice(from,until);
     },
 
-    canIntegrateId: function(id) {
+    // Id => Boolean
+    exists: function(id) {
       return this.indexOf(id) != -1;
     },
 
+    // WChar => Boolean
     canIntegrate: function(wchar) {
-      return this.canIntegrateId(wchar.next) && this.canIntegrateId(wchar.prev);
+      return this.exists(wchar.next) && this.exists(wchar.prev);
     },
 
+    // Op => Boolean
+    canIntegrateOp: function(op) {
+      return op.op == "ins" ? this.canIntegrate(op.wchar) : this.exists(op.wchar.id);
+    },
+
+    // Lowest-level primitive insert into the local character array
     ins: function(wchar, pos) {
       console.log("Insert ", wchar, " at ", pos);
       this.chars.splice(pos, 0, wchar); // mutate
 
-      // TODO: try to dequeue
+      // de-queue any now valid waiting operations:
+      var op = _.find(this.queue, this.canIntegrateOp);
+
+      if (op) {
+
+        function eq(x) {
+          return x.op === op.op &&
+             x.wchar.id.site === op.wchar.id.site &&
+              x.wchar.id.clock === op.wchar.id.clock;
+        }
+
+        this.queue = _.reject(this.queue, eq); // mutate
+        this.remoteIntegrate(op);
+      }
 
     },
 
@@ -180,6 +206,7 @@ See src/test/javascript/WootModelSpec.js for more usage.
       this.chars[this.indexOf(id)].isVisible = false; // mutate
     },
 
+    // (WChar, Id, Id) => Unit
     integrateIns: function(wchar, before, after) {
       var s = this.subseq(before, after);
       if (_.isEmpty(s)) this.ins(wchar, this.indexOf(after));
@@ -195,6 +222,7 @@ See src/test/javascript/WootModelSpec.js for more usage.
       }
     },
 
+    // List[Id] => List[Id]
     reduce: function(cs) {
 
       function idNotEqual(a,b) {
@@ -210,6 +238,7 @@ See src/test/javascript/WootModelSpec.js for more usage.
       })
     },
 
+    // (String, String, Int) => Operation
     localIntegrate: function (op, ch, pos) {
       if (op === "ins") {
 
@@ -233,7 +262,7 @@ See src/test/javascript/WootModelSpec.js for more usage.
         var existingChar = this.ithVisible(pos);
         existingChar.isVisible = false; // mutate
         console.log(this.asString());
-        return existingChar;
+        return { op: "del", wchar: existingChar };
       }
 
     }

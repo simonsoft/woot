@@ -99,9 +99,12 @@ case class WString(
   
 
   // # Applicability test
-  private def canIntegrate(c: WChar) : Boolean =
-    canIntegrate(c.next) && canIntegrate(c.prev)
-    
+
+  private def canIntegrate(op: Operation) : Boolean = op match {
+    case InsertOp(c) => canIntegrate(c.next) && canIntegrate(c.prev)
+    case DeleteOp(c) => chars.exists(_.id == c.id)
+  }
+
   private def canIntegrate(id: Id) : Boolean =
     id == Ending || id == Beginning || chars.exists(_.id == id)
 
@@ -111,7 +114,7 @@ case class WString(
   
   private def dequeue : WString = {
     def without(op: Operation) : Vector[Operation] = queue.filterNot(_ == op)
-    queue.find(op => canIntegrate(op.char)).map(op => copy(queue = without(op)).integrate(op)) getOrElse this
+    queue.find(canIntegrate).map(op => copy(queue = without(op)).integrate(op)) getOrElse this
   } 
     
   // # Delete means making the character invisible.
@@ -131,9 +134,9 @@ case class WString(
   
   // # The more general form for integration or delete
   def integrate(op: Operation) : WString = op match {
-    case InsertOp(c) if canIntegrate(c)            => integrate(c, c.prev, c.next)
-    case DeleteOp(c) if chars.exists(_.id == c.id) => hide(c)
-    case _                                         => enqueue(op)
+    case InsertOp(c) if canIntegrate(op) => integrate(c, c.prev, c.next)
+    case DeleteOp(c) if canIntegrate(op) => hide(c)
+    case _                               => enqueue(op)
   }
   
   private def integrate(c: WChar, before: Id, after: Id) : WString = {
