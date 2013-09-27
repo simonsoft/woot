@@ -14,6 +14,7 @@ define(
     WString.prototype = {
 
       init: function (site, initClockValue, cs, qs) {
+        this.site = site;
         this.clockValue = initClockValue;
         this.chars = cs || [];  // Stores WCHAR structures
         this.queue = qs || [];  // Stores OPERATION structures
