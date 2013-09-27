@@ -86,3 +86,12 @@ There will be a [Lift](http://liftweb.net) application, which you can start with
 This includes an editor and a transport, giving you a working shared editor in localhost:8080.
 
 
+-------------------
+
+# Debugging in the browser 
+
+If you see either of these errors in your chrome console, view the [Stackoverflow Question](http://stackoverflow.com/questions/18365315/jquerys-jquery-1-10-2-min-map-is-triggering-a-404-not-found), for a solution:
+:
+  * GET http://localhost:8080/jquery-1.10.2.min.map 404 (Not Found) 
+  * GET http://localhost:8080/underscore-min.map 404 (Not Found) 
+
