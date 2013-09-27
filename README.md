@@ -19,23 +19,31 @@ WOOT stands for With Out [Operational Transforms](https://en.wikipedia.org/wiki/
 
 The JavaScript implementation is of the _model_: you need to bring your own editor and transport mechanism.
 
-You'll find the code in `src/main/webapp/wootmodel.js` and it uses UnderscoreJS and RequireJs.
+You'll find the code in `src/main/webapp/wootmodel.js` and it uses [Underscore.js](http://underscorejs.org/) and [RequireJS](http://requirejs.org/).
 
 ## Example usage
 
     // Empty model for site 1, clock value 0.
-    var model = WOOT.WString(1, 0)
+    var model = new WString(1, 0)
 
     // Locally insert "A" at position 0.
     // This returns an operation you can send to your peers.
     var op = model.localIntegrate("ins", "A", 0);
 
     // If you receive an operation:
-    model.remoteIntegrate(op);
+    model.remoteIntegrate(op, function(ipos) {
+      if (op.op == "del")
+        console.log("Delete the char at pos ", ipos);
+   	  else
+   	    console.log("Insert ", op.wchar.alpha, " at ", ipos);
+    });
 
-This will update the model (the data-structure is mutable), possibly adding the operation to a local queue if it cannot be applied yet.
 
-Queue operations are automatically tested on any `remoteIntegrate` call.
+The `remoteIntegrate` call will update the model (the data-structure is mutable). It may not happen immediately. For example, if the model cannot integrate the remote operation, the operation will go onto a queue and be applied when preconditions are satisfied.
+
+Queued operations are automatically tested on any `remoteIntegrate` call. You don't have to work the WOOT queue yourself.
+
+For a full example of using the library via RequireJS, see `src/main/webapp/index.html` which imports code via `main.js`.
 
 
 ## Data Structures
@@ -67,7 +75,7 @@ Queue operations are automatically tested on any `remoteIntegrate` call.
 
 ## Jasmine unit tests
 
-To run the Jasmine unit test, open `src/test/javascript/SpecRunner.html` in a browser.
+To run the [Jasmine](http://pivotal.github.io/jasmine/) tests, open `src/test/javascript/SpecRunner.html` in a browser.
 
 -------------------
 
@@ -75,16 +83,17 @@ To run the Jasmine unit test, open `src/test/javascript/SpecRunner.html` in a br
 
 ## How to run the code
 
-You don't, yet.  There is a unit test:
+There are unit tests:
 
     $ sbt test
     
-There will be a [Lift](http://liftweb.net) application, which you can start with:
+There is a [Lift](http://liftweb.net/) application, which you can start with:
 
     $ sbt 
-    $ container:start
+    > container:start
     
-This includes an editor and a transport, giving you a working shared editor in localhost:8080.
+This is a single document example using the [ACE](http://ace.c9.io/) editor, with Lift providing
+ the transport.  Running this example gives you a shared editor at [http://127.0.0.1:8080](http://127.0.0.1:8080).
 
 
 -------------------

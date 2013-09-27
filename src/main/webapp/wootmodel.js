@@ -97,29 +97,30 @@ define(
         return -1;
       },
 
-      // op => index (or -1 if operation not integrated)
-      remoteIntegrate: function(rop) {
+      // Integrate rop into this WString, calling function f after integration if integration happened.
+      remoteIntegrate: function(rop, f) {
         // Clone to avoid sharing state between different instances of WString in the same JS interpreter
-        var op = _.extend(_.clone(rop), { wchar: _.clone(rop.wchar) });
+        var op = _.extend(_.clone(rop), { wchar: _.clone(rop.wchar) }, f ? { afterIntegration: f } : {} );
         console.log("INTEGRATION OF REMOTE OP ", op);
         if (this.canIntegrateOp(op)) {
           if (op.op === "ins") {
             this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next);
-            return this.visibleIndexOf(op.wchar.id);
+            var pos = this.visibleIndexOf(op.wchar.id);
+            if (op.afterIntegration && _.isFunction(op.afterIntegration))
+              op.afterIntegration(pos,op,this);
           }
           else if (op.op == "del") {
-            var i = this.visibleIndexOf(op.wchar.id);
+            var pos = this.visibleIndexOf(op.wchar.id);
             this.hide(op.wchar.id);
-            return i;
+            if (op.afterIntegration && _.isFunction(op.afterIntegration))
+              op.afterIntegration(pos,op,this);
           }
           else {
             console.log("ERR: Unrecognised op:", op.op, op);
-            return -1;
           }
         } else {
           console.log("Queueing");
           this.queue.push(op); // mutate
-          return -1;
         }
       },
 

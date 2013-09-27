@@ -51,6 +51,14 @@ define(
       return v.wchar && v.wchar.id && v.from !== model.site;
     }
 
+    // Just after a remote operation is integrated, this is what we want to happen:
+    var afterRemoteIntegration = function(ipos, op) {
+      var delta = asDelta(op, ipos);
+      if (existy(delta)) offAir(function() {
+        editor.getSession().getDocument().applyDeltas([delta]);
+      });
+    };
+
     // The handler will first be called with a WString, and from then on just with an operation
     var messageHandler = function(v) {
       console.log("HANDING ", v);
@@ -59,10 +67,7 @@ define(
         // TODO: replace editor with document
       }
       else if (isOpToIntegrate(v,model)) {
-        var ipos = model.remoteIntegrate(v), delta = asDelta(v, ipos);
-        if (existy(delta)) offAir(function() {
-          editor.getSession().getDocument().applyDeltas([delta]);
-        });
+        model.remoteIntegrate(v, afterRemoteIntegration);
       }
       else console.log("Ignoring ", v);
     };
