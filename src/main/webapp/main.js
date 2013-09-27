@@ -24,6 +24,9 @@ define(
       if (isDocumentMessage(v)) model.init(v.site, v.clockValue, v.chars, v.queue);
       else if (isOpToIntegrate(v,model)) model.remoteIntegrate(v);
       else console.log("Ignoring ", v);
+
+      // TODO: ACTUALLY UPDATE THE EDITOR WITH CHANGES!
+
     };
 
     var shutdownHandler = function() {
