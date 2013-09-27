@@ -138,6 +138,7 @@ case class WString(
     case DeleteOp(c) if canIntegrate(op) => hide(c)
     case _                               => enqueue(op)
   }
+
   
   private def integrate(c: WChar, before: Id, after: Id) : WString = {
       
@@ -149,12 +150,12 @@ case class WString(
                  
           // - when there's a choice, locate an insert point based on `Id.<`
           case search : Vector[WChar] =>
-            
-            // This lifted straight from `IntegrateIns` p. 11 of RR5580.
-            var i = 1
+
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
-            while (i < (L.length - 1) && L(i) < c.id) i = i + 1 
-            
+
+            // Implementation modified from `IntegrateIns` p. 11 of RR5580.
+		    val i =  L.takeWhile( _ < c.id ).length
+		    
             integrate(c, L(i-1), L(i))
       }
 
