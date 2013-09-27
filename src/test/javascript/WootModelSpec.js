@@ -47,37 +47,37 @@ describe("WOOT Model", function() {
     var model = new WString(1, 1);
 
     it("Beginning < Ending = true", function() {
-      expect(model.idLessThan(model.beginningId(), model.endingId())).toBe(true);
+      expect(model.idLessThan(model.beginningId, model.endingId)).toBe(true);
     });
 
     it("Beginning < Beginning = false", function() {
-      expect(model.idLessThan(model.beginningId(), model.beginningId())).toBe(false);
+      expect(model.idLessThan(model.beginningId, model.beginningId)).toBe(false);
     });
 
     it("Ending < Beginning = false", function() {
-      expect(model.idLessThan(model.endingId(), model.beginningId())).toBe(false);
+      expect(model.idLessThan(model.endingId, model.beginningId)).toBe(false);
     });
 
     it("Ending < Ending = false", function() {
-      expect(model.idLessThan(model.endingId(), model.endingId())).toBe(false);
+      expect(model.idLessThan(model.endingId, model.endingId)).toBe(false);
     });
 
     var site1clock1 = { site: 1, clock: 1 };
 
     it("Beginning < ID = true", function() {
-      expect(model.idLessThan(model.beginningId(), site1clock1)).toBe(true);
+      expect(model.idLessThan(model.beginningId, site1clock1)).toBe(true);
     });
 
     it("ID < Beginning = false", function() {
-      expect(model.idLessThan(site1clock1, model.beginningId())).toBe(false);
+      expect(model.idLessThan(site1clock1, model.beginningId)).toBe(false);
     });
 
     it("ID < Ending = true", function() {
-      expect(model.idLessThan(site1clock1, model.endingId())).toBe(true);
+      expect(model.idLessThan(site1clock1, model.endingId)).toBe(true);
     });
 
     it("Ending < ID = false", function() {
-      expect(model.idLessThan(model.endingId(),site1clock1)).toBe(false);
+      expect(model.idLessThan(model.endingId,site1clock1)).toBe(false);
     });
 
   });
@@ -140,7 +140,7 @@ describe("WOOT Model", function() {
     var op1 = site1.localIntegrate("ins", "A", 0);
     site2.remoteIntegrate(op1);
 
-    var op2 = site1.localIntegrate("del", "A", 0)
+    var op2 = site1.localIntegrate("del", "A", 0);
 
     it("should return an OPERATION representation", function() {
       expect(op2).toEqual({
@@ -168,7 +168,7 @@ describe("WOOT Model", function() {
       // Create an insert and delete...
       var site1 = new WString(1, 1);
       var ins = site1.localIntegrate("ins", "A", 0);
-      var del = site1.localIntegrate("del", "A", 0)
+      var del = site1.localIntegrate("del", "A", 0);
       expect(site1.asString()).toBe("");
 
       // ...and apply in the wrong order on another site:

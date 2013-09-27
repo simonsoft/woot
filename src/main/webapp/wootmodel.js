@@ -11,6 +11,11 @@ define(
       this.queue = [];
     }
 
+    var silence = function() {};
+
+    var trace = silence;
+    var err = console.log;
+
     WString.prototype = {
 
       init: function (site, initClockValue, cs, qs) {
@@ -24,13 +29,9 @@ define(
         return { site: this.site, clock: this.tick() };
       },
 
-      endingId: function() {
-        return { ending: true };
-      },
+      endingId: { ending: true },
 
-      beginningId: function() {
-        return { beginning: true };
-      },
+      beginningId: { beginning: true },
 
       tick: function () {
         this.clockValue = this.clockValue + 1;
@@ -50,12 +51,12 @@ define(
       },
 
       prevOf: function(visiblePos) {
-        if (visiblePos == 0) return this.beginningId();
+        if (visiblePos == 0) return this.beginningId;
         else return this.ithVisible(visiblePos-1).id;
       },
 
       nextOf: function(visiblePos) {
-        if (visiblePos >= this.visible().length) return this.endingId();
+        if (visiblePos >= this.visible().length) return this.endingId;
         else return this.ithVisible(visiblePos).id; // Not +1 because we are inserting just before this char
       },
 
@@ -101,25 +102,25 @@ define(
       remoteIntegrate: function(rop, f) {
         // Clone to avoid sharing state between different instances of WString in the same JS interpreter
         var op = _.extend(_.clone(rop), { wchar: _.clone(rop.wchar) }, f ? { afterIntegration: f } : {} );
-        console.log("INTEGRATION OF REMOTE OP ", op);
+        trace("Integration of remote op: ", op);
         if (this.canIntegrateOp(op)) {
           if (op.op === "ins") {
             this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next);
-            var pos = this.visibleIndexOf(op.wchar.id);
+            var ipos = this.visibleIndexOf(op.wchar.id);
             if (op.afterIntegration && _.isFunction(op.afterIntegration))
-              op.afterIntegration(pos,op,this);
+              op.afterIntegration(ipos,op,this);
           }
           else if (op.op == "del") {
-            var pos = this.visibleIndexOf(op.wchar.id);
+            var dpos = this.visibleIndexOf(op.wchar.id);
             this.hide(op.wchar.id);
             if (op.afterIntegration && _.isFunction(op.afterIntegration))
-              op.afterIntegration(pos,op,this);
+              op.afterIntegration(dpos,op,this);
           }
           else {
-            console.log("ERR: Unrecognised op:", op.op, op);
+            err("Unrecognised op:", op.op, op);
           }
         } else {
-          console.log("Queueing");
+          trace("Queueing");
           this.queue.push(op); // mutate
         }
       },
@@ -147,7 +148,7 @@ define(
 
       // Lowest-level primitive insert into the local character array
       ins: function(wchar, pos) {
-        console.log("Insert ", wchar, " at ", pos);
+        trace("Insert ", wchar, " at ", pos);
         this.chars.splice(pos, 0, wchar); // mutate
 
         // de-queue any now valid waiting operations:
@@ -221,18 +222,15 @@ define(
           // Insert the wchar locally (mutate):
           this.chars.splice(this.indexOf(nextId), 0, newChar);
 
-          console.log(this.asString());
           return { op: op, from: this.site, wchar: newChar };
-
         }
         else if (op === "del") {
           var existingChar = this.ithVisible(pos);
           existingChar.isVisible = false; // mutate
-          console.log(this.asString());
           return { op: op, from: this.site, wchar: existingChar };
         }
         else {
-          console.log("ERR: Unrecognized local operation ", op);
+          err("Unrecognised local operation type", op);
           return {};
         }
 
@@ -243,4 +241,3 @@ define(
     return WString;
   }
 );
-

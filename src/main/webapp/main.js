@@ -8,6 +8,9 @@ define(
 
     function existy(x) { return x != null }
 
+    var silence = function() {};
+    var trace = silence;
+
     var onAir = true; // Are we broadcasting changes?
 
     // Execute a block without broadcasting the change
@@ -61,7 +64,7 @@ define(
 
     // The handler will first be called with a WString, and from then on just with an operation
     var messageHandler = function(v) {
-      console.log("HANDING ", v);
+      trace("Handling: ", v);
       if (isDocumentMessage(v)) {
         model.init(v.site, v.clockValue, v.chars, v.queue);
         // TODO: replace editor with document
@@ -69,11 +72,11 @@ define(
       else if (isOpToIntegrate(v,model)) {
         model.remoteIntegrate(v, afterRemoteIntegration);
       }
-      else console.log("Ignoring ", v);
+      else trace("Ignoring ", v);
     };
 
     var shutdownHandler = function() {
-      console.log("Remote has closed (done)");
+      alert("Remote has closed.");
     };
 
     // TODO: would it be better if model was created, somehow, during wootServer.init?
@@ -90,7 +93,7 @@ define(
     };
 
     var broadcast1 = function(op, ch, pos) {
-      console.log("BROADCASTING ",op," on ",ch," @ ",pos);
+      trace("Broadcasting: ",op," on ",ch," @ ",pos);
       var op = model.localIntegrate(op, ch, pos);
       wootServer.send(op);
     };
