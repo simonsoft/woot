@@ -6,31 +6,69 @@ define(
   ],
   function(WString) {
 
+    function existy(x) { return x != null }
+
+    var onAir = true; // Are we broadcasting changes?
+
+    // Execute a block without broadcasting the change
+    function offAir(block) {
+      var was = onAir;
+      onAir = false;
+      block();
+      onAir = was;
+    }
+
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/merbivore");
     editor.getSession().setMode("ace/mode/markdown");
 
-    function isDefined(v) { return !(_.isUndefined(v)); };
+    // Convert ACE "position" (row/column) to WOOT "index":
+    function idx(position) {
+      return editor.getSession().getDocument().positionToIndex(position);
+    }
 
-    function isDocumentMessage(v) { return isDefined(v.chars); };
+    // Covert a WOOT "index" into an ACE "position"
+    function pos(idx) {
+      return editor.getSession().getDocument().indexToPosition(idx);
+    }
+
+    // Convert a WOOT operation to an ACE delta object for WOOT index i:
+    function asDelta(op, i) {
+      if (i !== -1)
+        return {
+          action: op.op == "ins" ? "insertText" : "removeText",
+          range: {
+            start: pos(i),
+            end: pos(i + op.wchar.alpha.length)
+          },
+          text: op.wchar.alpha
+        };
+    }
+
+    function isDocumentMessage(v) { return existy(v.chars); }
 
     function isOpToIntegrate(v,model) {
-      return v.wchar && v.wchar.id && v.wchar.id.site !== model.site;
-    };
+      return v.wchar && v.wchar.id && v.from !== model.site;
+    }
 
     // The handler will first be called with a WString, and from then on just with an operation
     var messageHandler = function(v) {
-      console.log("HANDING  ", v);
-      if (isDocumentMessage(v)) model.init(v.site, v.clockValue, v.chars, v.queue);
-      else if (isOpToIntegrate(v,model)) model.remoteIntegrate(v);
+      console.log("HANDING ", v);
+      if (isDocumentMessage(v)) {
+        model.init(v.site, v.clockValue, v.chars, v.queue);
+        // TODO: replace editor with document
+      }
+      else if (isOpToIntegrate(v,model)) {
+        var ipos = model.remoteIntegrate(v), delta = asDelta(v, ipos);
+        if (existy(delta)) offAir(function() {
+          editor.getSession().getDocument().applyDeltas([delta]);
+        });
+      }
       else console.log("Ignoring ", v);
-
-      // TODO: ACTUALLY UPDATE THE EDITOR WITH CHANGES!
-
     };
 
     var shutdownHandler = function() {
-      console.log("Remote is done");
+      console.log("Remote has closed (done)");
     };
 
     // TODO: would it be better if model was created, somehow, during wootServer.init?
@@ -38,10 +76,6 @@ define(
     var model = new WString(1, 1);
     wootServer.init({ name: "shared doc 1"}).then(messageHandler).done(shutdownHandler);
 
-    // Convert ACE "position" (row/column) to WOOT "index":
-    var idx = function(position) {
-      return editor.getSession().getDocument().positionToIndex(position);
-    };
 
     // `text` is of arbitrary size: for now we serialize to individual operations:
     var broadcast = function(op, text, range) {
@@ -61,7 +95,7 @@ define(
     };
 
     editor.getSession().on('change', function(e) {
-      if (e.data.action == "insertText" || e.data.action == "removeText")
+      if (onAir && (e.data.action == "insertText" || e.data.action == "removeText"))
         broadcast(normalizeOpName(e.data.action), e.data.text, e.data.range);
     });
 

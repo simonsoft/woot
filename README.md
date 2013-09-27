@@ -61,6 +61,7 @@ Queue operations are automatically tested on any `remoteIntegrate` call.
  
 	  {
 	   op: "ins" (or "del"),
+	   from: N (site id),
 	   wchar: WCHAR
 	  }
 

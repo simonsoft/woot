@@ -69,14 +69,23 @@ define(
                   (a.site < b.site) || (a.site === b.site && a.clock < b.clock) );
       },
 
-      // The index into `chars` of the given ID; or -1 if not found.
-      indexOf: function(id) {
+      visibleIndexOf: function(id) {
+        return this.indexOf(id, this.visible());
+      },
+
+      // The index into `chars` (by default) of the given ID; or -1 if not found.
+      indexOf: function(id, col) {
         if (id.beginning) return 0;
-        else if (id.ending) return this.chars.length;
-        else return this.indexWhere(_.pluck(this.chars,'id'), function(a) {
+        else {
+          var cs = col || this.chars;
+          if (id.ending) return cs.length;
+          else return this.indexWhere(_.pluck(cs, 'id'), function(a) {
             return (a.site === id.site && a.clock === id.clock);
           });
+        }
       },
+
+
 
       // The first index in `col` where `pred` is true for an element of `col`; or -1 otherwise.
       // pred : Id => Boolean
@@ -88,20 +97,30 @@ define(
         return -1;
       },
 
-      // op => WString
+      // op => index (or -1 if operation not integrated)
       remoteIntegrate: function(rop) {
         // Clone to avoid sharing state between different instances of WString in the same JS interpreter
-        var op = { op: rop.op, wchar: _.clone(rop.wchar) };
+        var op = _.extend(_.clone(rop), { wchar: _.clone(rop.wchar) });
         console.log("INTEGRATION OF REMOTE OP ", op);
         if (this.canIntegrateOp(op)) {
-          if (op.op === "ins") this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next);
-          else if (op.op == "del") this.hide(op.wchar.id);
-          else console.log("ERR: Unrecognised op:", op.op, op);
+          if (op.op === "ins") {
+            this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next);
+            return this.visibleIndexOf(op.wchar.id);
+          }
+          else if (op.op == "del") {
+            var i = this.visibleIndexOf(op.wchar.id);
+            this.hide(op.wchar.id);
+            return i;
+          }
+          else {
+            console.log("ERR: Unrecognised op:", op.op, op);
+            return -1;
+          }
         } else {
           console.log("Queueing");
           this.queue.push(op); // mutate
+          return -1;
         }
-        return this;
       },
 
       subseq: function(prev,next) {
@@ -202,25 +221,23 @@ define(
           this.chars.splice(this.indexOf(nextId), 0, newChar);
 
           console.log(this.asString());
-          return { op: "ins", wchar: newChar };
+          return { op: op, from: this.site, wchar: newChar };
 
         }
         else if (op === "del") {
           var existingChar = this.ithVisible(pos);
           existingChar.isVisible = false; // mutate
           console.log(this.asString());
-          return { op: "del", wchar: existingChar };
+          return { op: op, from: this.site, wchar: existingChar };
         }
         else {
           console.log("ERR: Unrecognized local operation ", op);
           return {};
         }
 
-
       }
 
     };
-
 
     return WString;
   }

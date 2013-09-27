@@ -100,6 +100,7 @@ describe("WOOT Model", function() {
     it("local integrate should return an OPERATION object", function() {
       expect(op1).toEqual({
         op: 'ins',
+        from: 1,
         wchar: {
           alpha: '1',
           id: { site:1, clock:2 },
@@ -144,6 +145,7 @@ describe("WOOT Model", function() {
     it("should return an OPERATION representation", function() {
       expect(op2).toEqual({
         op: "del",
+        from: 1,
         wchar: {
           alpha : 'A',
           id : { site : 1, clock : 2 },
