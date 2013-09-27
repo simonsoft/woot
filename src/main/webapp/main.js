@@ -37,15 +37,14 @@ define(
 
     // Convert a WOOT operation to an ACE delta object for WOOT index i:
     function asDelta(op, i) {
-      if (i !== -1)
-        return {
-          action: op.op == "ins" ? "insertText" : "removeText",
-          range: {
-            start: pos(i),
-            end: pos(i + op.wchar.alpha.length)
-          },
-          text: op.wchar.alpha
-        };
+      return {
+        action: op.op == "ins" ? "insertText" : "removeText",
+        range: {
+          start: pos(i),
+          end: pos(i + op.wchar.alpha.length)
+        },
+        text: op.wchar.alpha
+      };
     }
 
     function isDocumentMessage(v) { return existy(v.chars); }
@@ -65,13 +64,8 @@ define(
     // The handler will first be called with a WString, and from then on just with an operation
     var messageHandler = function(v) {
       trace("Handling: ", v);
-      if (isDocumentMessage(v)) {
-        model.init(v.site, v.clockValue, v.chars, v.queue);
-        // TODO: replace editor with document
-      }
-      else if (isOpToIntegrate(v,model)) {
-        model.remoteIntegrate(v, afterRemoteIntegration);
-      }
+      if (isDocumentMessage(v)) model.init(v.site, v.clockValue, v.chars, v.queue);
+      else if (isOpToIntegrate(v,model)) model.remoteIntegrate(v, afterRemoteIntegration);
       else trace("Ignoring ", v);
     };
 
@@ -80,12 +74,10 @@ define(
     };
 
     // TODO: would it be better if model was created, somehow, during wootServer.init?
-
     var model = new WString(1, 1);
     wootServer.init({ name: "shared doc 1"}).then(messageHandler).done(shutdownHandler);
 
-
-    // `text` is of arbitrary size: for now we serialize to individual operations:
+    // `text` is of arbitrary size. For now we serialize as individual operations:
     var broadcast = function(op, text, range) {
       var base = idx(range.start), len = (idx(range.end) - base);
       for(var p=0; p<len; p++)
