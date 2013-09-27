@@ -1,7 +1,7 @@
 
 package object woots {
 
-  type SiteId = Long
-  type ClockValue = Long
+  type SiteId = Int
+  type ClockValue = Int
   
 }

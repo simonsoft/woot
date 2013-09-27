@@ -42,7 +42,7 @@ define(
         return _.where(this.chars, { isVisible: true});
       },
 
-      asString: function() {
+      text: function() {
         return  _.pluck(this.visible(), 'alpha').join("");
       },
 

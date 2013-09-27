@@ -38,6 +38,7 @@ object CharId {
 case class WChar(id: Id, alpha: Char, prev: Id, next: Id, isVisible: Boolean = true) 
 
 // # Operations are inserts or deletes
+// TODO: needs to retain a from: SiteId field
 sealed trait Operation {
   def char : WChar
   def id = char.id

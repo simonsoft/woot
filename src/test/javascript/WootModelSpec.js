@@ -11,7 +11,7 @@ describe("WOOT Model", function() {
     model.localIntegrate("ins", "A", 0);
     model.localIntegrate("ins", "C", 1);
     model.localIntegrate("ins", "B", 1);
-    expect(model.asString()).toEqual("ABC");
+    expect(model.text()).toEqual("ABC");
   });
 
   describe("should be able to locate IDs", function() {
@@ -112,18 +112,18 @@ describe("WOOT Model", function() {
     });
 
     it("site3 results in 3124", function() {
-      expect(site3.asString()).toBe("314");
+      expect(site3.text()).toBe("314");
       expect(site1.idLessThan(op1.wchar.id, op2.wchar.id)).toBe(true);
 
       site3.remoteIntegrate(op2);
-      expect(site3.asString()).toBe("3124");
+      expect(site3.text()).toBe("3124");
     });
 
     it("site2 results in 3124", function() {
       site2.remoteIntegrate(op1);
       site2.remoteIntegrate(op3);
       site2.remoteIntegrate(op4);
-      expect(site2.asString()).toBe("3124");
+      expect(site2.text()).toBe("3124");
 
     });
 
@@ -156,11 +156,11 @@ describe("WOOT Model", function() {
     });
 
     it("should make a character invisible", function() {
-      expect(site1.asString()).toBe("");
+      expect(site1.text()).toBe("");
      console.log(site2);
-      expect(site2.asString()).toBe("A");
+      expect(site2.text()).toBe("A");
       site2.remoteIntegrate(op2);
-      expect(site2.asString()).toBe("");
+      expect(site2.text()).toBe("");
     });
 
     it("should queue and later apply operations that cannot immediately complete", function() {
@@ -169,13 +169,13 @@ describe("WOOT Model", function() {
       var site1 = new WString(1, 1);
       var ins = site1.localIntegrate("ins", "A", 0);
       var del = site1.localIntegrate("del", "A", 0);
-      expect(site1.asString()).toBe("");
+      expect(site1.text()).toBe("");
 
       // ...and apply in the wrong order on another site:
       var site2 = new WString(2, 1);
       site2.remoteIntegrate(del);
       site2.remoteIntegrate(ins);
-      expect(site2.asString()).toBe("");
+      expect(site2.text()).toBe("");
     });
 
 

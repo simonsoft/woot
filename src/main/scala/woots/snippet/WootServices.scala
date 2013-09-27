@@ -10,8 +10,12 @@ import net.liftweb.json.JsonDSL._
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.Random
 
+
+
 object WootServices {
 
+  implicit val formats = DefaultFormats
+  
   def render = S.session.map(javascript) openOr NodeSeq.Empty
 
   private def javascript(s: LiftSession) : NodeSeq = Script { 
@@ -22,43 +26,62 @@ object WootServices {
     "send" -> receive _,
     "init" -> init _)
 
+  import JsonFormats._
+
+
   private def receive(jop: JValue): JValue = {
-    println(jop)
-    // TODO: Local integrate op
+    println("Received:"+jop)
     BroadcastStream push jop
     JNull
   }
 
   // TODO: how to identify the document the user wants to work with?
-  // TODO: how to signafy a new/unsaved document?
+  // TODO: how to signify a new/unsaved document?
   private def init(config: JValue, onChange: RoundTripHandlerFunc) : Unit = {
-    println("Loading woot model "+config)
-
-    // TODO: get from model?
-    val chars = JArray(Nil)
-    val queue = JArray(Nil)
-    val site = new Random().nextLong()
-    val initClockValue = 1L
-
+    println("Loading WOOT model "+config)
+   
+    val snapshot = BroadcastStream.model
+    println("Current model is:"+snapshot.text)
+    
+    val chars : JValue = snapshot.chars.map(toJson).map(Extraction.decompose)
+    val queue = JArray(Nil) // TODO: need from field on Operation type.
+    
     // TODO: what siteId should be use? What clock value?
+    val site = new Random().nextInt()
+    val initClockValue = 1
+
     val doc = ("chars" -> chars) ~ ("queue" -> queue) ~ ("site" -> site) ~ ("clockValue" -> initClockValue)
     onChange.send(doc)
 
     val q = BroadcastStream.q(site)
-    println("Streaming from "+q.hashCode())
+    println("Streaming for site "+site)
     Stream.continually(q.take()).foreach(v => onChange.send(v))
   }
 
 
   object BroadcastStream {
 
+    var model = WString()
+
     // TODO: the Long is the site, but should it be additionally indexed by document - otherwise this is a single document system (currently)
     // TODO: how to clean up this map?
-    private val qs = collection.mutable.Map[Long,LinkedBlockingQueue[JValue]]()
+    private val qs = collection.mutable.Map[Int,LinkedBlockingQueue[JValue]]()
 
-    def q(site: Long) = qs.getOrElseUpdate(site, new LinkedBlockingQueue[JValue])
+    def q(site: Int) = qs.getOrElseUpdate(site, new LinkedBlockingQueue[JValue])
 
     def push(v: JValue) = {
+
+      try {
+        for(op <- v.extractOpt[JOp].map(_.toOperation)) {
+          println("Integrating "+op)
+          model = model.integrate(op)
+          println(model)
+          println("Model: "+model.text)
+        }
+      } catch {
+        case x : Throwable => println(x) // e.g., match/deserialization error?
+     }
+
       qs.values.foreach(q => { println("Pushing onto "+q.hashCode()); q.add(v) }  )
     }
   }
