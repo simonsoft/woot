@@ -6,3 +6,4 @@
 mkdir -p docs/scala
 
 docco -c src/main/resources/docco.css -o docs/scala `find src/main/scala -name \*.scala`
+docco -c src/main/resources/docco.css -o docs/javascript src/main/webapp/wootmodel.js
