@@ -11,7 +11,7 @@ define(
       this.queue = [];
     }
 
-    var silence = function() {};
+    function silence() {}
 
     var trace = silence;
     var err = console.log;
@@ -99,7 +99,7 @@ define(
 
       // Integrate rop into this WString, calling function f after integration if integration happened.
       remoteIntegrate: function(rop, f) {
-        trace("Integration of remote op: ", op);
+        trace("Integration of remote op: ", rop);
 
         // Clone to avoid sharing state between different instances of WString in the same JS interpreter
         // Also, push the function into the operation in case it is queued for later.
