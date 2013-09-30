@@ -89,7 +89,6 @@ define(
 
 
       // The first index in `col` where `pred` is true for an element of `col`; or -1 otherwise.
-      // pred : Id => Boolean
       indexWhere: function(col, pred) {
         if (false === _.isEmpty(col))
           for (var i=0; i < col.length; i++)
@@ -100,21 +99,24 @@ define(
 
       // Integrate rop into this WString, calling function f after integration if integration happened.
       remoteIntegrate: function(rop, f) {
-        // Clone to avoid sharing state between different instances of WString in the same JS interpreter
-        var op = _.extend(_.clone(rop), { wchar: _.clone(rop.wchar) }, f ? { afterIntegration: f } : {} );
         trace("Integration of remote op: ", op);
+
+        // Clone to avoid sharing state between different instances of WString in the same JS interpreter
+        // Also, push the function into the operation in case it is queued for later.
+        var op = _.extend(_.clone(rop),
+          { wchar: _.clone(rop.wchar) },
+          f && _.isFunction(f) ? { afterIntegration: f } : {} );
+
         if (this.canIntegrateOp(op)) {
           if (op.op === "ins") {
             this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next);
             var ipos = this.visibleIndexOf(op.wchar.id);
-            if (op.afterIntegration && _.isFunction(op.afterIntegration))
-              op.afterIntegration(ipos,op,this);
+            if (op.afterIntegration) op.afterIntegration(ipos,op,this);
           }
           else if (op.op == "del") {
             var dpos = this.visibleIndexOf(op.wchar.id);
             this.hide(op.wchar.id);
-            if (op.afterIntegration && _.isFunction(op.afterIntegration))
-              op.afterIntegration(dpos,op,this);
+            if (op.afterIntegration) op.afterIntegration(dpos,op,this);
           }
           else {
             err("Unrecognised op:", op.op, op);
@@ -151,7 +153,7 @@ define(
         trace("Insert ", wchar, " at ", pos);
         this.chars.splice(pos, 0, wchar); // mutate
 
-        // de-queue any now valid waiting operations:
+        // de-queue a (now valid) waiting operation:
         var op = _.find(this.queue, _.bind(this.canIntegrateOp, this));
 
         if (op) {
@@ -222,7 +224,7 @@ define(
           // Insert the wchar locally (mutate):
           this.chars.splice(this.indexOf(nextId), 0, newChar);
 
-          return { op: op, from: this.site, wchar: newChar };
+          return { op: op, from: this.site, wchar: _.clone(newChar) };
         }
         else if (op === "del") {
           var existingChar = this.ithVisible(pos);

@@ -157,7 +157,6 @@ describe("WOOT Model", function() {
 
     it("should make a character invisible", function() {
       expect(site1.text()).toBe("");
-     console.log(site2);
       expect(site2.text()).toBe("A");
       site2.remoteIntegrate(op2);
       expect(site2.text()).toBe("");
@@ -176,6 +175,28 @@ describe("WOOT Model", function() {
       site2.remoteIntegrate(del);
       site2.remoteIntegrate(ins);
       expect(site2.text()).toBe("");
+    });
+
+    it("should trigger queued functions once they are applied", function() {
+
+      var site1 = new WString(1, 1);
+      var ins = site1.localIntegrate("ins", "A", 0);
+      var del = site1.localIntegrate("del", "A", 0);
+
+      var site2 = new WString(2, 1);
+
+      var fWasRun = false;
+      site2.remoteIntegrate(del, function(pos,op) {
+        fWasRun = true;
+        expect(_.omit(op, 'afterIntegration')).toEqual(del);
+        expect(pos).toBe(0);
+      });
+      expect(fWasRun).toBe(false);
+
+      site2.remoteIntegrate(ins);
+      expect(fWasRun).toBe(true);
+
+
     });
 
 
