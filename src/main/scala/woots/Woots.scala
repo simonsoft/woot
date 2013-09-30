@@ -38,16 +38,21 @@ object CharId {
 case class WChar(id: CharId, alpha: Char, prev: Id, next: Id, isVisible: Boolean = true)
 
 // # Operations are inserts or deletes
-// TODO: needs to retain a from: SiteId field
 sealed trait Operation {
   def wchar : WChar
   def from: SiteId
   def id = wchar.id
+  def name : String
 
 }
 
-case class InsertOp(override val wchar : WChar, override val from : SiteId) extends Operation
-case class DeleteOp(override val wchar : WChar, override val from : SiteId) extends Operation
+case class InsertOp(override val wchar : WChar, override val from : SiteId) extends Operation {
+  def name = "ins"
+}
+
+case class DeleteOp(override val wchar : WChar, override val from : SiteId) extends Operation {
+  def name = "del"
+}
 
 // # String representation
 // Note there there is no `WChar` representation of Beginning and Ending: they are not included in the vector.

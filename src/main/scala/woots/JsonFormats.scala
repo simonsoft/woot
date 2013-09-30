@@ -1,8 +1,15 @@
 package woots
 
+import net.liftweb.json.DefaultFormats
+import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json.JsonDSL._
+
 object JsonFormats {
 
   // TODO: This packaging/repackaging is dull. Why not use the same classes for JavaScript and WString ?
+
+  implicit val formats = DefaultFormats
+
 
   case class JId(site: Option[Int], clock: Option[Int], beginning: Option[Boolean], ending: Option[Boolean]) {
     def toId : Id = (beginning.isDefined, ending.isDefined, site, clock) match {
@@ -27,15 +34,26 @@ object JsonFormats {
     }
   }
 
-  def toJson(wchar: WChar) : JWChar =
-    JWChar(wchar.alpha.toString, toJson(wchar.id), toJson(wchar.prev), toJson(wchar.next), wchar.isVisible)
+  def toJson(op: Operation) : JValue =
+    ("op" -> op.name) ~ ("from" -> op.from) ~ ("wchar" -> toJson(op.wchar))
 
-  def toJson(id: CharId) = JCharId(id.ns, id.ng)
+  def toJson(wchar: WChar) : JValue = {
+    import wchar._
+    ("alpha" -> alpha.toString) ~
+    ("isVisible" -> isVisible) ~
+    ("id" -> toJson(id)) ~
+    ("prev" -> toJson(prev)) ~
+    ("next" -> toJson(next))
+  }
 
-  def toJson(id: Id) : JId =
+
+  def toJson(id: CharId) : JValue =
+    ("site" -> id.ns) ~ ("clock" -> id.ng)
+
+  def toJson(id: Id) : JValue =
     id match {
-      case Beginning          => JId(None,       None,        Some(true), None)
-      case Ending             => JId(None,       None,        None,       Some(true))
-      case CharId(site,clock) => JId(Some(site), Some(clock), None,       None)
+      case Beginning          => ("beginning" -> true)
+      case Ending             => ("ending" -> true)
+      case ci : CharId         => toJson(ci)
     }
 }

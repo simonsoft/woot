@@ -43,9 +43,9 @@ object WootServices {
     val snapshot = BroadcastStream.model
     println("Current model is:"+snapshot.text)
     
-    val chars : JValue = snapshot.chars.map(toJson).map(Extraction.decompose)
-    val queue = JArray(Nil) // TODO: need from field on Operation type.
-    
+    val chars : JValue = snapshot.chars.map(toJson)
+    val queue : JValue = snapshot.queue.map(toJson)
+
     // TODO: what siteId should be use? What clock value?
     val site = new Random().nextInt()
     val initClockValue = 1
@@ -70,6 +70,7 @@ object WootServices {
     def q(site: Int) = qs.getOrElseUpdate(site, new LinkedBlockingQueue[JValue])
 
     def push(v: JValue) = {
+
 
       try {
         for(op <- v.extractOpt[JOp].map(_.toOperation)) {

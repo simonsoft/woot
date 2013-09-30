@@ -8,7 +8,7 @@ define(
 
     function existy(x) { return x != null }
 
-    var silence = function() {};
+    function silence() {}
     var trace = silence;
 
     var onAir = true; // Are we broadcasting changes?
