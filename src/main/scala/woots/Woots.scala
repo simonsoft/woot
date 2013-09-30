@@ -35,17 +35,19 @@ object CharId {
 
 // # Characters
 // Currently coded to be a `Char`, but could be a `T`.
-case class WChar(id: Id, alpha: Char, prev: Id, next: Id, isVisible: Boolean = true) 
+case class WChar(id: CharId, alpha: Char, prev: Id, next: Id, isVisible: Boolean = true)
 
 // # Operations are inserts or deletes
 // TODO: needs to retain a from: SiteId field
 sealed trait Operation {
-  def char : WChar
-  def id = char.id
+  def wchar : WChar
+  def from: SiteId
+  def id = wchar.id
+
 }
 
-case class InsertOp(override val char : WChar) extends Operation
-case class DeleteOp(override val char : WChar) extends Operation
+case class InsertOp(override val wchar : WChar, override val from : SiteId) extends Operation
+case class DeleteOp(override val wchar : WChar, override val from : SiteId) extends Operation
 
 // # String representation
 // Note there there is no `WChar` representation of Beginning and Ending: they are not included in the vector.
@@ -102,8 +104,8 @@ case class WString(
   // # Applicability test
 
   private def canIntegrate(op: Operation) : Boolean = op match {
-    case InsertOp(c) => canIntegrate(c.next) && canIntegrate(c.prev)
-    case DeleteOp(c) => chars.exists(_.id == c.id)
+    case InsertOp(c,_) => canIntegrate(c.next) && canIntegrate(c.prev)
+    case DeleteOp(c,_) => chars.exists(_.id == c.id)
   }
 
   private def canIntegrate(id: Id) : Boolean =
@@ -126,21 +128,14 @@ case class WString(
     val (before, rest) = chars splitAt p
     copy(chars = (before :+ replacement) ++ (rest drop 1) )
   }
-  
-  // # Integration is the process of merging a `WChar` into a `WString` producing a new `WString`
-  def integrate(c: WChar) : WString = integrate(InsertOp(c))
-  
-  // # Deletion hides a character, producing a new `WString`
-  def delete(c: WChar) : WString = integrate(DeleteOp(c))
-  
-  // # The more general form for integration or delete
+
+  // # Integrate an insert or delete, giving a new `WString`
   def integrate(op: Operation) : WString = op match {
-    case InsertOp(c) if canIntegrate(op) => integrate(c, c.prev, c.next)
-    case DeleteOp(c) if canIntegrate(op) => hide(c)
-    case _                               => enqueue(op)
+    case InsertOp(c,_) if canIntegrate(op) => integrate(c, c.prev, c.next)
+    case DeleteOp(c,_) if canIntegrate(op) => hide(c)
+    case _                                 => enqueue(op)
   }
 
-  
   private def integrate(c: WChar, before: Id, after: Id) : WString = {
       
       // Looking at all the characters between the previous and next positions:
@@ -155,8 +150,7 @@ case class WString(
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
 
             // Implementation modified from `IntegrateIns` p. 11 of RR5580.
-		    val i =  L.takeWhile( _ < c.id ).length
-		    
+            val i =  L.takeWhile( _ < c.id ).length
             integrate(c, L(i-1), L(i))
       }
 
@@ -170,7 +164,5 @@ case class WString(
       c <- cs
       if cs.forall(x => x.id != c.next && x.id != c.prev)
     } yield c
-  
-  
-}
 
+}

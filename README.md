@@ -1,5 +1,17 @@
 # JavaScript and Scala Implementations of WOOT
 
+### For the impatient
+
+To run the demo:
+
+    $ ./sbt
+    > container:start
+   
+...then  open: [http://127.0.0.1:8080](http://127.0.0.1:8080).  This will give you a shared document, using the [ACE](http://ace.c9.io/) editor.
+
+
+# What is WOOT?
+
 WOOT is a collaborative text editing algorithm, allowing multiple users ("sites") to insert or delete characters (`WChar`) from a shared document (`WString`). The algorithm preserves the intention of users, and ensures that the text converges to the same state for all users.
 
 Its key properties are simplicity, and avoiding the need for a reliable network or vector clocks (it can be peer-to-peer).
@@ -48,14 +60,13 @@ For a full example of using the library via RequireJS, see `src/main/webapp/inde
 
 ## Data Structures
 
-* ID
+### ID
 
       {
        site: N,
        clock: N
       }
-
-* WCHAR
+### WCHAR
 	
 	  {
 	   id: ID,
@@ -65,7 +76,7 @@ For a full example of using the library via RequireJS, see `src/main/webapp/inde
 	   next: ID
       }
 
-* OPERATION:
+### OPERATION
  
 	  {
 	   op: "ins" (or "del"),
@@ -80,6 +91,19 @@ To run the [Jasmine](http://pivotal.github.io/jasmine/) tests, open `src/test/ja
 -------------------
 
 # Scala
+
+The Scala version of the model is intended to be a passive peer in a collaborative editing session.  As such the `integrate` method is a remote integrate, and there is no equivalent of the JavaScript `localIntegrate` function. (Only because I don't need it -- it wouldn't be hard to add at all.)
+
+The Scala `WString` data structure is immutable, which is another difference from the JavaScript version.
+
+## Example usage
+
+    val s = WString()
+    val c = WChar(CharId(1,1), 'A', Beginning, Ending)
+    val s_prime = s.integrate(InsOperation(c, from=1))
+    s_prime.text == "A"
+
+
 
 ## How to run the code
 

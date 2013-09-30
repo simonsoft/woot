@@ -7,6 +7,12 @@ import org.scalacheck.Gen
 
 class WootSpec extends Specification with ScalaCheck {
 
+  object insertAssumingSenderIsCharCreator {
+    implicit class InsertHelper(s: WString) {
+      def integrate(c: WChar) = s.integrate(InsertOp(c, c.id.ns))
+    }
+  }
+
   "Single User Woot" should {
     
     val w1 = WChar(CharId(1,1), 'A', Beginning, Ending) 
@@ -24,7 +30,9 @@ class WootSpec extends Specification with ScalaCheck {
     "allow insertion based on previous and next IDs" in {
       
       val s1 = WString().ins(w1,0).ins(w2,1).ins(w3,2)
-      
+
+      import insertAssumingSenderIsCharCreator._
+
       s1.integrate( WChar(CharId(1,4), 'X', Beginning, w1.id) ).text must_== "XABC"
       s1.integrate( WChar(CharId(1,4), 'X', w1.id, w2.id) ).text must_== "AXBC"
       s1.integrate( WChar(CharId(1,4), 'X', w2.id, w3.id) ).text must_== "ABXC"
@@ -40,7 +48,9 @@ class WootSpec extends Specification with ScalaCheck {
       
     val o1 = WChar(CharId(1,1), '1', Beginning, Ending)
     val o2 = WChar(CharId(2,1), '2', Beginning, Ending)
-   
+
+    import insertAssumingSenderIsCharCreator._
+
     val site3 = WString().integrate(o1)
     
     val o3 = WChar(CharId(3,1), '3', Beginning, o1.id)
@@ -79,12 +89,15 @@ class WootSpec extends Specification with ScalaCheck {
     val o3 = WChar(CharId(3,1), '3', Beginning, o1.id)
     val o4 = WChar(CharId(3,2), '4', o1.id, Ending)
 
+    import insertAssumingSenderIsCharCreator._
+
+
     "mean a character is not visible if removed" in {
       WString().
        integrate(o2).
        integrate(o1).
        integrate(o3).
-       delete(o2).
+       integrate(DeleteOp(o2, 1)).
        integrate(o4).
        text must_== "314"
     }
@@ -94,10 +107,10 @@ class WootSpec extends Specification with ScalaCheck {
        integrate(o2).
        integrate(o1).
        integrate(o3).
-       delete(o2).
-       delete(o4).
-       delete(o1).
-       delete(o3).
+       integrate(DeleteOp(o2,1)).
+       integrate(DeleteOp(o4,1)).
+       integrate(DeleteOp(o1,1)).
+       integrate(DeleteOp(o3,1)).
        integrate(o4).
        text must_== ""
     }
@@ -112,13 +125,13 @@ class WootSpec extends Specification with ScalaCheck {
     val d = WChar(CharId(1,4), 'd', c.id, Ending)
    
     // Set up:
-    val site = WString().integrate(a).integrate(b).integrate(c).integrate(d)
-    site.text must_== "abcd" 
-             
+    val site = List(a,b,c,d).foldLeft(WString()) { _ integrate InsertOp(_, 1) }
+    site.text must_== "abcd"
+
     val ops = 
-      InsertOp(WChar(CharId(1,5), 'x', c.id, d.id)) ::
-      DeleteOp(b) ::
-      InsertOp(WChar(CharId(3,1), 'y', b.id, c.id)) :: 
+      InsertOp(WChar(CharId(1,5), 'x', c.id, d.id), 1) ::
+      DeleteOp(b, 2) ::
+      InsertOp(WChar(CharId(3,1), 'y', b.id, c.id), 3) ::
       Nil
        
     implicit def opSeq : Arbitrary[List[Operation]] = Arbitrary {

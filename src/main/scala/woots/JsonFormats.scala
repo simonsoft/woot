@@ -12,21 +12,25 @@ object JsonFormats {
     }
   }
 
-  case class JWChar(alpha: String, id: JId, prev: JId, next: JId, isVisible: Boolean) {
+  case class JCharId(site: Int, clock: Int) {
+    def toId = CharId(site,clock)
+  }
+
+  case class JWChar(alpha: String, id:JCharId, prev: JId, next: JId, isVisible: Boolean) {
     def toWChar : WChar = WChar(id.toId, alpha.head, prev.toId, next.toId, isVisible=isVisible)
   }
 
-
-  
   case class JOp(op: String, from: SiteId, wchar: JWChar) {
     def toOperation : Operation = op match {
-      case "ins" => InsertOp(wchar.toWChar)
-      case "del" => DeleteOp(wchar.toWChar)
+      case "ins" => InsertOp(wchar.toWChar, from)
+      case "del" => DeleteOp(wchar.toWChar, from)
     }
   }
 
   def toJson(wchar: WChar) : JWChar =
     JWChar(wchar.alpha.toString, toJson(wchar.id), toJson(wchar.prev), toJson(wchar.next), wchar.isVisible)
+
+  def toJson(id: CharId) = JCharId(id.ns, id.ng)
 
   def toJson(id: Id) : JId =
     id match {
