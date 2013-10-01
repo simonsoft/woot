@@ -30,8 +30,7 @@ object WootServices {
 
 
   private def receive(jop: JValue): JValue = {
-    println("Received:"+jop)
-    BroadcastStream push jop
+    Broadcaster ! PushToQueue(jop)
     JNull
   }
 
@@ -40,51 +39,27 @@ object WootServices {
   private def init(config: JValue, onChange: RoundTripHandlerFunc) : Unit = {
     println("Loading WOOT model "+config)
    
-    val snapshot = BroadcastStream.model
-    println("Current model is:"+snapshot.text)
-    
-    val chars : JValue = snapshot.chars.map(toJson)
-    val queue : JValue = snapshot.queue.map(toJson)
-
     // TODO: what siteId should be use? What clock value?
     val site = new Random().nextInt()
-    val initClockValue = 1
+    val initClockValue = 1    
+    
+    for { ss <- Broadcaster !< GetModel()
+    	 if ss.isInstanceOf[WString]} yield{
+    	   val snapshot = ss.asInstanceOf[WString]
+    	   val chars : JValue = snapshot.chars.map(toJson)
+           val queue : JValue = snapshot.queue.map(toJson)
+           val doc = ("chars" -> chars) ~ ("queue" -> queue) ~ ("site" -> site) ~ ("clockValue" -> initClockValue)
+           onChange.send(doc)
+    	 }  
 
-    val doc = ("chars" -> chars) ~ ("queue" -> queue) ~ ("site" -> site) ~ ("clockValue" -> initClockValue)
-    onChange.send(doc)
-
-    val q = BroadcastStream.q(site)
-    println("Streaming for site "+site)
-    Stream.continually(q.take()).foreach(v => onChange.send(v))
-  }
-
-
-  object BroadcastStream {
-
-    var model = WString()
-
-    // TODO: the Long is the site, but should it be additionally indexed by document - otherwise this is a single document system (currently)
-    // TODO: how to clean up this map?
-    private val qs = collection.mutable.Map[Int,LinkedBlockingQueue[JValue]]()
-
-    def q(site: Int) = qs.getOrElseUpdate(site, new LinkedBlockingQueue[JValue])
-
-    def push(v: JValue) = {
-
-
-      try {
-        for(op <- v.extractOpt[JOp].map(_.toOperation)) {
-          println("Integrating "+op)
-          model = model.integrate(op)
-          println(model)
-          println("Model: "+model.text)
-        }
-      } catch {
-        case x : Throwable => println(x) // e.g., match/deserialization error?
-     }
-
-      qs.values.foreach(q => { println("Pushing onto "+q.hashCode()); q.add(v) }  )
+    for  { queue <- Broadcaster !< GetQueue(site)
+    	  if queue.isInstanceOf[LinkedBlockingQueue[JValue]]
+    } {
+        val jsQ = queue.asInstanceOf[LinkedBlockingQueue[JValue]]
+    	println("Streaming for site "+site)
+    	Stream.continually(jsQ.take()).foreach(v => onChange.send(v))      
     }
+
   }
 
 }
