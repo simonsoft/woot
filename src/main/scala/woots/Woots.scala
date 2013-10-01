@@ -154,8 +154,9 @@ case class WString(
 
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
 
-            // Implementation modified from `IntegrateIns` p. 11 of RR5580.
-            val i =  L.takeWhile( _ < c.id ).length
+            // Implementation from `IntegrateIns` p. 11 of RR5580.
+            var i = 1
+            while (i < (L.length-1) && (L(i) < c.id)) i = i + 1;
             integrate(c, L(i-1), L(i))
       }
 
