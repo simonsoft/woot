@@ -11,7 +11,7 @@ object JsonFormats {
   implicit val formats = DefaultFormats
 
 
-  case class JId(site: Option[Int], clock: Option[Int], beginning: Option[Boolean], ending: Option[Boolean]) {
+  case class JId(site: Option[SiteId], clock: Option[Int], beginning: Option[Boolean], ending: Option[Boolean]) {
     def toId : Id = (beginning.isDefined, ending.isDefined, site, clock) match {
       case (true , false, _, _ ) => Beginning
       case (false, true , _, _ ) => Ending
@@ -19,7 +19,7 @@ object JsonFormats {
     }
   }
 
-  case class JCharId(site: Int, clock: Int) {
+  case class JCharId(site: SiteId, clock: Int) {
     def toId = CharId(site,clock)
   }
 

@@ -1,12 +1,15 @@
 package bootstrap.liftweb
 
-import net.liftweb._
-import util._
-import Helpers._
+import java.util.Random
 
-import common._
-import http._
-import sitemap._
+import net.liftweb._
+import net.liftweb.common._
+import net.liftweb.http._
+import net.liftweb.sitemap._
+import net.liftweb.util._
+import net.liftweb.util.Helpers._
+import woots.snippet.Broadcaster
+import woots.snippet.RemoveSite
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -39,7 +42,25 @@ class Boot {
     LiftRules.early.append(_.setCharacterEncoding("UTF-8"))
 
     // Use HTML5 for rendering
-    LiftRules.htmlProperties.default.set((r: Req) =>
-      new Html5Properties(r.userAgent))    
+    LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
+   
+    LiftRules.sessionInactivityTimeout.default.set(Full(30L*1000))
+   
+    //Not needed and also doens't work,.
+	LiftSession.onSetupSession ::= (
+	  (s : LiftSession) => S.initIfUninitted(s) {
+		  val siteId = s.uniqueId
+		  S.set("siteId", siteId )
+		  println(s"SETUP SESSION SET SiteId $siteId session $s ${S.get("foo")}")		  
+	  }
+	  )
+
+	LiftSession.onShutdownSession ::= (
+	  (s : LiftSession) => {
+	      println(s"SHUTDOWN SESSION GET FOO ${s.uniqueId} session  $s")	    
+		  Broadcaster ! RemoveSite( s.uniqueId)
+	  } 
+	  )	  
+	  
   }
 }

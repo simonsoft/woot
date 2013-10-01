@@ -1,7 +1,7 @@
 
 package object woots {
 
-  type SiteId = Int
+  type SiteId = String
   type ClockValue = Int
   
 }

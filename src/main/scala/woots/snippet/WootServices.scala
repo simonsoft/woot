@@ -10,8 +10,6 @@ import net.liftweb.json.JsonDSL._
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.Random
 
-
-
 object WootServices {
 
   implicit val formats = DefaultFormats
@@ -39,25 +37,22 @@ object WootServices {
   private def init(config: JValue, onChange: RoundTripHandlerFunc) : Unit = {
     println("Loading WOOT model "+config)
    
+    val site = S.session.map(_.uniqueId).getOrElse("SITE_ID_UNAVAILABLE")
+    
     // TODO: what siteId should be use? What clock value?
-    val site = new Random().nextInt()
     val initClockValue = 1    
     
-    for { ss <- Broadcaster !< GetModel()
-    	 if ss.isInstanceOf[WString]} yield{
-    	   val snapshot = ss.asInstanceOf[WString]
+    for { snapshot <- (Broadcaster !! GetModel()).asA[WString] } {
     	   val chars : JValue = snapshot.chars.map(toJson)
            val queue : JValue = snapshot.queue.map(toJson)
            val doc = ("chars" -> chars) ~ ("queue" -> queue) ~ ("site" -> site) ~ ("clockValue" -> initClockValue)
            onChange.send(doc)
     	 }  
 
-    for  { queue <- Broadcaster !< GetQueue(site)
-    	  if queue.isInstanceOf[LinkedBlockingQueue[JValue]]
+    for  { queue <- (Broadcaster !! GetQueue(site)).asA[LinkedBlockingQueue[JValue]]
     } {
-        val jsQ = queue.asInstanceOf[LinkedBlockingQueue[JValue]]
     	println("Streaming for site "+site)
-    	Stream.continually(jsQ.take()).foreach(v => onChange.send(v))      
+    	Stream.continually(queue.take()).foreach(v => onChange.send(v))      
     }
 
   }

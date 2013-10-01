@@ -11,6 +11,11 @@ import net.liftweb.json.JsonAST.JValue
 import woots.JsonFormats.JOp
 import net.liftweb.json.DefaultFormats
 import woots.WString
+import net.liftweb.http.SessionVar
+import java.util.Random
+import oracle.jrockit.jfr.Logger
+import net.liftweb.http.S
+import net.liftweb.http.LiftSession
 
 trait Msg
 
@@ -19,6 +24,7 @@ case class RemoveSite(id: SiteId)
 case class GetQueue(id: SiteId)
 case class PushToQueue(operation: JValue)
 case class GetModel()
+case class CleanUp(id:SiteId)
 
 object Broadcaster extends LiftActor with Loggable {
 
@@ -30,13 +36,14 @@ object Broadcaster extends LiftActor with Loggable {
 
   // TODO: the Int is the site, but should it be additionally indexed by document - otherwise this is a single document system (currently)
   // TODO: how to clean up this map?  
-  private val qs = collection.mutable.Map[Int, LinkedBlockingQueue[JValue]]()
+  private val qs = collection.mutable.Map[SiteId, LinkedBlockingQueue[JValue]]()
 
   def messageHandler: PartialFunction[Any, Unit] = {
     case AddSite(siteId) ⇒
       logger.info(s"Add site $siteId")
       sites ::= siteId
     case RemoveSite(siteId) ⇒
+    	println(s"remove site $siteId")
       logger.info(s"Remove site $siteId")
       sites = sites.filter(_ != siteId)
     case GetQueue(siteId) ⇒
@@ -52,7 +59,9 @@ object Broadcaster extends LiftActor with Loggable {
         case x: Throwable ⇒ logger.error("Unable to integrate operation", x) // e.g., match/deserialization error?
       }
       qs.values.foreach(q ⇒ { println(s"Pushing onto ${ q.hashCode()}"); q.add(operation) })
-    case GetModel() => reply(model)
+    case GetModel() => 
+      logger.info(s" SiteId ${S.get("foo")}")
+      reply(model)
     case otherwise ⇒ logger.error(s"Unknown msg $otherwise")
   }
 
