@@ -15,9 +15,9 @@ class WootSpec extends Specification with ScalaCheck {
 
   "Single User Woot" should {
     
-    val w1 = WChar(CharId(1,1), 'A', Beginning, Ending) 
-    val w2 = WChar(CharId(1,2), 'B', w1.id,     Ending) 
-    val w3 = WChar(CharId(1,3), 'C', w2.id,     Ending)   
+    val w1 = WChar(CharId("1",1), 'A', Beginning, Ending) 
+    val w2 = WChar(CharId("1",2), 'B', w1.id,     Ending) 
+    val w3 = WChar(CharId("1",3), 'C', w2.id,     Ending)   
    
     "allow insertion of a WChar at a specific position (internal test)" in {
 
@@ -33,10 +33,10 @@ class WootSpec extends Specification with ScalaCheck {
 
       import insertAssumingSenderIsCharCreator._
 
-      s1.integrate( WChar(CharId(1,4), 'X', Beginning, w1.id) ).text must_== "XABC"
-      s1.integrate( WChar(CharId(1,4), 'X', w1.id, w2.id) ).text must_== "AXBC"
-      s1.integrate( WChar(CharId(1,4), 'X', w2.id, w3.id) ).text must_== "ABXC"
-      s1.integrate( WChar(CharId(1,4), 'X', w3.id, Ending) ).text must_== "ABCX"
+      s1.integrate( WChar(CharId("1",4), 'X', Beginning, w1.id) ).text must_== "XABC"
+      s1.integrate( WChar(CharId("1",4), 'X', w1.id, w2.id) ).text must_== "AXBC"
+      s1.integrate( WChar(CharId("1",4), 'X', w2.id, w3.id) ).text must_== "ABXC"
+      s1.integrate( WChar(CharId("1",4), 'X', w3.id, Ending) ).text must_== "ABCX"
    
     }
     
@@ -46,15 +46,15 @@ class WootSpec extends Specification with ScalaCheck {
    
     val site2 = WString()
       
-    val o1 = WChar(CharId(1,1), '1', Beginning, Ending)
-    val o2 = WChar(CharId(2,1), '2', Beginning, Ending)
+    val o1 = WChar(CharId("1",1), '1', Beginning, Ending)
+    val o2 = WChar(CharId("1",1), '2', Beginning, Ending)
 
     import insertAssumingSenderIsCharCreator._
 
     val site3 = WString().integrate(o1)
     
-    val o3 = WChar(CharId(3,1), '3', Beginning, o1.id)
-    val o4 = WChar(CharId(3,2), '4', o1.id, Ending)
+    val o3 = WChar(CharId("3",1), '3', Beginning, o1.id)
+    val o4 = WChar(CharId("3",2), '4', o1.id, Ending)
 
     "site2 results in 3124" in {
       site2.integrate(o2).
@@ -84,10 +84,10 @@ class WootSpec extends Specification with ScalaCheck {
   }
   
   "Deleting" should {
-    val o1 = WChar(CharId(1,1), '1', Beginning, Ending)
-    val o2 = WChar(CharId(2,1), '2', Beginning, Ending)
-    val o3 = WChar(CharId(3,1), '3', Beginning, o1.id)
-    val o4 = WChar(CharId(3,2), '4', o1.id, Ending)
+    val o1 = WChar(CharId("1",1), '1', Beginning, Ending)
+    val o2 = WChar(CharId("2",1), '2', Beginning, Ending)
+    val o3 = WChar(CharId("3",1), '3', Beginning, o1.id)
+    val o4 = WChar(CharId("3",2), '4', o1.id, Ending)
 
     import insertAssumingSenderIsCharCreator._
 
@@ -97,7 +97,7 @@ class WootSpec extends Specification with ScalaCheck {
        integrate(o2).
        integrate(o1).
        integrate(o3).
-       integrate(DeleteOp(o2, 1)).
+       integrate(DeleteOp(o2, "1")).
        integrate(o4).
        text must_== "314"
     }
@@ -107,10 +107,10 @@ class WootSpec extends Specification with ScalaCheck {
        integrate(o2).
        integrate(o1).
        integrate(o3).
-       integrate(DeleteOp(o2,1)).
-       integrate(DeleteOp(o4,1)).
-       integrate(DeleteOp(o1,1)).
-       integrate(DeleteOp(o3,1)).
+       integrate(DeleteOp(o2,"1")).
+       integrate(DeleteOp(o4,"1")).
+       integrate(DeleteOp(o1,"1")).
+       integrate(DeleteOp(o3,"1")).
        integrate(o4).
        text must_== ""
     }
@@ -119,19 +119,19 @@ class WootSpec extends Specification with ScalaCheck {
   
   "TP2 puzzle (p. 16 of RR5580)" should {
     
-    val a = WChar(CharId(1,1), 'a', Beginning, Ending)
-    val b = WChar(CharId(1,2), 'b', a.id, Ending)
-    val c = WChar(CharId(1,3), 'c', b.id, Ending)
-    val d = WChar(CharId(1,4), 'd', c.id, Ending)
+    val a = WChar(CharId("1",1), 'a', Beginning, Ending)
+    val b = WChar(CharId("1",2), 'b', a.id, Ending)
+    val c = WChar(CharId("1",3), 'c', b.id, Ending)
+    val d = WChar(CharId("1",4), 'd', c.id, Ending)
    
     // Set up:
-    val site = List(a,b,c,d).foldLeft(WString()) { _ integrate InsertOp(_, 1) }
+    val site = List(a,b,c,d).foldLeft(WString()) { _ integrate InsertOp(_, "1") }
     site.text must_== "abcd"
 
     val ops = 
-      InsertOp(WChar(CharId(1,5), 'x', c.id, d.id), 1) ::
-      DeleteOp(b, 2) ::
-      InsertOp(WChar(CharId(3,1), 'y', b.id, c.id), 3) ::
+      InsertOp(WChar(CharId("1",5), 'x', c.id, d.id), "1") ::
+      DeleteOp(b, "2") ::
+      InsertOp(WChar(CharId("3",1), 'y', b.id, c.id), "3") ::
       Nil
        
     implicit def opSeq : Arbitrary[List[Operation]] = Arbitrary {
