@@ -117,11 +117,11 @@ class WootSpec extends Specification with ScalaCheck {
 
     "allows a character to be added back again" in {
 
-      val a1 = WChar(CharId(1,1), 'A', Beginning, Ending)
-      val b1 = WChar(CharId(1,2), 'B', a1.id, Ending)
-      val a2 = WChar(CharId(1,3), 'A', Beginning, b1.id)
+      val a1 = WChar(CharId("1",1), 'A', Beginning, Ending)
+      val b1 = WChar(CharId("1",2), 'B', a1.id, Ending)
+      val a2 = WChar(CharId("1",3), 'A', Beginning, b1.id)
 
-      val seq = InsertOp(a1,1) :: InsertOp(b1,1) :: DeleteOp(a1,1) :: InsertOp(a2,1) :: Nil
+      val seq = InsertOp(a1,"1") :: InsertOp(b1,"1") :: DeleteOp(a1,"1") :: InsertOp(a2,"1") :: Nil
 
       seq.foldLeft(WString()) { _ integrate _ }.text must_== "AB"
     }
