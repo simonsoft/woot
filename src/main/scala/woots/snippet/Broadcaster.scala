@@ -1,21 +1,11 @@
-package woots.snippet
+package woots
+package snippet
 
 import java.util.concurrent.LinkedBlockingQueue
 import net.liftweb.common.Loggable
-import net.liftweb.http.AddAListener
-import net.liftweb.http.RemoveAListener
-import net.liftweb.common.SimpleActor
 import net.liftweb.actor.LiftActor
-import woots.SiteId
 import net.liftweb.json.JsonAST.JValue
-import woots.JsonFormats.JOp
 import net.liftweb.json.DefaultFormats
-import woots.WString
-import net.liftweb.http.SessionVar
-import java.util.Random
-import oracle.jrockit.jfr.Logger
-import net.liftweb.http.S
-import net.liftweb.http.LiftSession
 
 trait Msg
 
@@ -37,13 +27,18 @@ object Broadcaster extends LiftActor with Loggable {
   private val qs = collection.mutable.Map[SiteId, LinkedBlockingQueue[JValue]]()
 
   def messageHandler: PartialFunction[Any, Unit] = {
+    case AddSite(siteId) if sites contains siteId ⇒ logger.warn("Site already added")
+
     case AddSite(siteId) ⇒  sites ::= siteId
     	println(s" added $siteId to $sites")
+
     case RemoveSite(siteId) ⇒  sites = sites.filter(_ != siteId)
         println(s" removed $siteId from $sites")
     case GetQueue(siteId) ⇒ 
     reply(qs.getOrElseUpdate(siteId, new LinkedBlockingQueue[JValue]))
     case PushToQueue(operation: JValue) ⇒
+      import JsonFormats.JOp
+
       try {
         for (op ← operation.extractOpt[JOp].map(_.toOperation)) {
           model = model.integrate(op)
