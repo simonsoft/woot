@@ -47,7 +47,7 @@ class WootSpec extends Specification with ScalaCheck {
     val site2 = WString()
       
     val o1 = WChar(CharId("1",1), '1', Beginning, Ending)
-    val o2 = WChar(CharId("1",1), '2', Beginning, Ending)
+    val o2 = WChar(CharId("2",1), '2', Beginning, Ending)
 
     import insertAssumingSenderIsCharCreator._
 
