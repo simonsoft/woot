@@ -37,8 +37,12 @@ object WootServices {
     println("Loading WOOT model " + config)
 
     val site = S.session.map(_.uniqueId).getOrElse("SITE_ID_UNAVAILABLE")
-
-    // TODO: what siteId should be use? What clock value?
+    Broadcaster ! AddSite(site)
+    // TODO: What clock value?
+    // Should the clock value be the last clock value of the document?
+    // Hmmm, If the entire list of changes of the document are sent to the client,
+    // one would hope there is an optimization available somewhere, the initial 
+    // clock value should be that at the initial document creation.  
     val initClockValue = 1
 
     for { snapshot ← (Broadcaster !! GetModel()).asA[WString] } {
