@@ -136,8 +136,16 @@ case class WString(
 
   // # Integrate an insert or delete, giving a new `WString`
   def integrate(op: Operation) : WString = op match {
+    // - Don't insert the same ID twice:
+    case InsertOp(c,_) if chars.exists(_.id == c.id) => this
+
+    // - Insert can go ahead if the next & prev exist:
     case InsertOp(c,_) if canIntegrate(op) => integrate(c, c.prev, c.next)
+
+    // - We can delete any char that exists:
     case DeleteOp(c,_) if canIntegrate(op) => hide(c)
+
+    // - Anything else goes onto the queue for another time:
     case _                                 => enqueue(op)
   }
 

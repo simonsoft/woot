@@ -39,6 +39,11 @@ class WootSpec extends Specification with ScalaCheck {
       s1.integrate( WChar(CharId("1",4), 'X', w3.id, Ending) ).text must_== "ABCX"
    
     }
+
+    "integrate is idempotent based on ID" in {
+      val op = InsertOp(WChar(CharId("1",1), 'A', Beginning, Ending), "1")
+      WString().integrate(op).integrate(op).text must_== "A"
+    }
     
   }
   
