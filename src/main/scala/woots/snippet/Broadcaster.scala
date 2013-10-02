@@ -33,13 +33,16 @@ object Broadcaster extends LiftActor with Loggable {
 
   private var sites: List[SiteId] = Nil
 
-  // TODO: the Int is the site, but should it be additionally indexed by document - otherwise this is a single document system (currently)
+  // TODO: It be additionally indexed by document - otherwise this is a single document system (currently)
   private val qs = collection.mutable.Map[SiteId, LinkedBlockingQueue[JValue]]()
 
   def messageHandler: PartialFunction[Any, Unit] = {
-    case AddSite(siteId) ⇒ sites ::= siteId
-    case RemoveSite(siteId) ⇒ sites = sites.filter(_ != siteId)
-    case GetQueue(siteId) ⇒ reply(qs.getOrElseUpdate(siteId, new LinkedBlockingQueue[JValue]))
+    case AddSite(siteId) ⇒  sites ::= siteId
+    	println(s" added $siteId to $sites")
+    case RemoveSite(siteId) ⇒  sites = sites.filter(_ != siteId)
+        println(s" removed $siteId from $sites")
+    case GetQueue(siteId) ⇒ 
+    reply(qs.getOrElseUpdate(siteId, new LinkedBlockingQueue[JValue]))
     case PushToQueue(operation: JValue) ⇒
       try {
         for (op ← operation.extractOpt[JOp].map(_.toOperation)) {
@@ -49,7 +52,7 @@ object Broadcaster extends LiftActor with Loggable {
         case x: Throwable ⇒ logger.error("Unable to integrate operation", x) // e.g., match/deserialization error?
       }
       qs.values.foreach(q ⇒ { println(s"Pushing onto ${q.hashCode()}"); q.add(operation) })
-    case GetModel() ⇒ reply(model)
+    case GetModel() ⇒  reply(model)
     case otherwise ⇒ logger.error(s"Unknown msg $otherwise")
   }
 
