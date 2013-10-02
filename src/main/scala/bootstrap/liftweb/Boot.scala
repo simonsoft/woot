@@ -44,23 +44,11 @@ class Boot {
     // Use HTML5 for rendering
     LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
    
-    LiftRules.sessionInactivityTimeout.default.set(Full(30L*1000))
-   
-    //Not needed and also doens't work,.
-	LiftSession.onSetupSession ::= (
-	  (s : LiftSession) => S.initIfUninitted(s) {
-		  val siteId = s.uniqueId
-		  S.set("siteId", siteId )
-		  println(s"SETUP SESSION SET SiteId $siteId session $s ${S.get("foo")}")		  
-	  }
-	  )
+    //Useful testing session timeouts.
+    //LiftRules.sessionInactivityTimeout.default.set(Full(30L*1000))
 
-	LiftSession.onShutdownSession ::= (
-	  (s : LiftSession) => {
-	      println(s"SHUTDOWN SESSION GET FOO ${s.uniqueId} session  $s")	    
-		  Broadcaster ! RemoveSite( s.uniqueId)
-	  } 
-	  )	  
+    //Clean up session related information in the broadcaster.
+	LiftSession.onShutdownSession ::= ((s : LiftSession) => { Broadcaster ! RemoveSite( s.uniqueId)})	  
 	  
   }
 }

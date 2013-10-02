@@ -51,7 +51,7 @@ object WootServices {
 
     for  { queue <- (Broadcaster !! GetQueue(site)).asA[LinkedBlockingQueue[JValue]]
     } {
-    	println("Streaming for site "+site)
+    	println(s"Streaming for site $site")
     	Stream.continually(queue.take()).foreach(v => onChange.send(v))      
     }
 
