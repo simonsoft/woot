@@ -1,24 +1,23 @@
 object Worksheet {
   import woots._
+  import scala.language.postfixOps
+  import scala.math._
 
-  val date = new java.util.Date()                 //> date  : java.util.Date = Fri Sep 27 12:16:08 EST 2013
+  val date = new java.util.Date()                 //> date  : java.util.Date = Thu Oct 03 10:14:23 EST 2013
 
-	val vector = Vector(Beginning,CharId(1,0),CharId(1,1),CharId(1,2),CharId(1,3),CharId(1,4),CharId(1,5),CharId(1,6),CharId(1,7),Ending)
-                                                  //> vector  : scala.collection.immutable.Vector[woots.Id] = Vector(woots.Beginni
-                                                  //| ng$@19f7456f, CharId(1,0), CharId(1,1), CharId(1,2), CharId(1,3), CharId(1,4
-                                                  //| ), CharId(1,5), CharId(1,6), CharId(1,7), woots.Ending$@58d6c6a0)
+  val L = (0 to 10).toVector                      //> L  : Vector[Int] = Vector(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
-	val character = WChar(CharId(1,4), 'M', Beginning, Ending)
-                                                  //> character  : woots.WChar = WChar(CharId(1,4),M,woots.Beginning$@19f7456f,woo
-                                                  //| ts.Ending$@58d6c6a0,true)
-                                                  
-  val string = WString()                          //> string  : woots.WString = WString(Vector(),Vector())
+  var i = 1                                       //> i  : Int = 1
+	
+	val c  = 13                               //> c  : Int = 13
+	
+	val myi = min(L.length -1,L.takeWhile( _ < c ).length);
+                                                  //> myi  : Int = 10
   
-  val i = string.ith(vector,character)            //> i  : Int = 4
-  val vi = string.ith(vector,character)           //> vi  : Int = 4
-  vector(i)                                       //> res0: woots.Id = CharId(1,3)
+  while (i < (L.length-1) && (L(i) < c)) i = i + 1;
   
-  vector(vi)                                      //> res1: woots.Id = CharId(1,3)
-                                                  
+  println(i)                                      //> 10
+
+                                                 
                                                   
 }

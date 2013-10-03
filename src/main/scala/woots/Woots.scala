@@ -10,10 +10,15 @@ sealed trait Id {
 
 object Beginning extends Id {
   def < (that: Id) = true
+  
+  override def toString = "Beginning"
+  
 }
 
 object Ending extends Id {
   def < (that: Id) = false
+  
+  override def toString = "Ending"
 }
 
 case class CharId(ns: SiteId, ng: ClockValue) extends Id { 
@@ -162,9 +167,9 @@ case class WString(
 
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
 
-            // Implementation from `IntegrateIns` p. 11 of RR5580.
-            var i = 1
-            while (i < (L.length-1) && (L(i) < c.id)) i = i + 1;
+            // Modified from the implementation from `IntegrateIns` p. 11 of RR5580.
+            val i = math.min(L.length -1,L.takeWhile( _ < c.id ).length)
+ 	             
             integrate(c, L(i-1), L(i))
       }
 
