@@ -42,11 +42,12 @@ object Broadcaster extends LiftActor with Loggable {
       try {
         for (op ← operation.extractOpt[JOp].map(_.toOperation)) {
           model = model.integrate(op)
+          qs.filterKeys(_ != op.from).values.foreach(q ⇒ { println(s"Pushing onto ${q.hashCode()}"); q.add(operation) })
         }
       } catch {
         case x: Throwable ⇒ logger.error("Unable to integrate operation", x) // e.g., match/deserialization error?
       }
-      qs.values.foreach(q ⇒ { println(s"Pushing onto ${q.hashCode()}"); q.add(operation) })
+
     case GetModel() ⇒  reply(model)
     case otherwise ⇒ logger.error(s"Unknown msg $otherwise")
   }
