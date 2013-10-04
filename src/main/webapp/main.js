@@ -23,6 +23,7 @@ define(
 
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/merbivore");
+    editor.getSession().getDocument().setNewLineMode("unix");
     editor.getSession().setMode("ace/mode/markdown");
 
     // Convert ACE "position" (row/column) to WOOT "index":
@@ -39,6 +40,7 @@ define(
 
     // Convert a WOOT operation to an ACE delta object for WOOT index i:
     function asDelta(op, i) {
+      //console.log("Delta ",op.wchar.alpha,i,pos(i));
       return {
         action: op.op == "ins" ? "insertText" : "removeText",
         range: {
@@ -58,7 +60,7 @@ define(
     // Just after a remote operation is integrated, this is what we want to happen:
     var afterRemoteIntegration = function(ipos, op) {
       var delta = asDelta(op, ipos);
-      if (existy(delta)) offAir(function() {
+      offAir(function() {
         editor.getSession().getDocument().applyDeltas([delta]);
       });
     };
@@ -116,6 +118,7 @@ define(
     };
 
     function dispatch(f, text, range, event) {
+      //console.log(event.data);
       _.isFunction(f) ? f(text, range, event) : trace("Ignoring Command ",event.data.action);
     }
 
