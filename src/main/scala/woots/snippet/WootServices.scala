@@ -43,7 +43,7 @@ object WootServices {
     // Hmmm, If the entire list of changes of the document are sent to the client,
     // one would hope there is an optimization available somewhere, the initial 
     // clock value should be that at the initial document creation.  
-    val initClockValue = 1
+    val initClockValue = System.currentTimeMillis()
 
     for { snapshot ← (Broadcaster !! GetModel()).asA[WString] } {
       val chars: JValue = snapshot.chars.map(toJson)
@@ -55,7 +55,7 @@ object WootServices {
     for {
       queue ← (Broadcaster !! GetQueue(site)).asA[LinkedBlockingQueue[JValue]]
     } {
-      println(s"Streaming for site $site")
+      println(s"Streaming for site $site through ${queue.hashCode}")
       Stream.continually(queue.take()).foreach(v ⇒ onChange.send(v))
     }
 
