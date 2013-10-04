@@ -80,6 +80,26 @@ define(
     var model = new WString(1, 1);
     wootServer.init({ docId: "1" }).then(messageHandler).done(shutdownHandler);
 
+    var broadcastLines = function(op, lines, range) {
+      console.log("broadcastLines",range);
+      for (var i =  0; i < lines.length - 1; i++) {
+        var lineRange = {
+          start: {
+              column:0,
+              row: range.start.row + i},
+          end: {
+              column:lines[i].length,
+              row: range.start.row + i
+            }
+        };
+        try {
+          broadcast(op,lines[i],lineRange);  
+        } catch (e) {
+            console.log("line ",i, lineRange, lines[i],e);          
+        };
+      }
+    };
+
     // `text` is of arbitrary size. For now we serialize as individual operations:
     var broadcast = function(op, text, range) {
       var base = idx(range.start), len = (idx(range.end) - base);
@@ -104,6 +124,8 @@ define(
     editor.getSession().on('change', function(e) {
       if (onAir && (e.data.action == "insertText" || e.data.action == "removeText"))
         broadcast(normalizeOpName(e.data.action), e.data.text, e.data.range);
+      if (onAir && (e.data.action == "insertLines" ))
+        broadcastLines( "ins", e.data.lines, e.data.range);      
     });
 
 
