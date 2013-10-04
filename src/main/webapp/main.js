@@ -8,8 +8,8 @@ define(
 
     function existy(x) { return x != null }
 
-    function silence() {}
-    var trace = silence;
+    //var trace = function() { console.log.apply(console, arguments); };
+    var trace = function() {};
 
     var onAir = true; // Are we broadcasting changes?
 
@@ -34,6 +34,8 @@ define(
     function pos(idx) {
       return editor.getSession().getDocument().indexToPosition(idx);
     }
+
+    /* -- From server to client functions: remote integration -------------------------------------- */
 
     // Convert a WOOT operation to an ACE delta object for WOOT index i:
     function asDelta(op, i) {
@@ -76,29 +78,13 @@ define(
       alert("Remote has closed.");
     };
 
+
+    /* -- From client to server functions: local integration ----------------------------------------- */
+
+
     // TODO: would it be better if model was created, somehow, during wootServer.init?
     var model = new WString(1, 1);
     wootServer.init({ docId: "1" }).then(messageHandler).done(shutdownHandler);
-
-    var broadcastLines = function(op, lines, range) {
-      console.log("broadcastLines",range);
-      for (var i =  0; i < lines.length - 1; i++) {
-        var lineRange = {
-          start: {
-              column:0,
-              row: range.start.row + i},
-          end: {
-              column:lines[i].length,
-              row: range.start.row + i
-            }
-        };
-        try {
-          broadcast(op,lines[i],lineRange);  
-        } catch (e) {
-            trace("line ",i, lineRange, lines[i],e);          
-        };
-      }
-    };
 
     // `text` is of arbitrary size. For now we serialize as individual operations:
     var broadcast = function(op, text, range) {
@@ -111,21 +97,30 @@ define(
         broadcast1(op, text[p], charpos(p));
     };
 
-    var broadcast1 = function(op, ch, pos) {
-      trace("Broadcasting: ",op," on ",ch," @ ",pos);
-      var op = model.localIntegrate(op, ch, pos);
+    var broadcast1 = function(opType, ch, pos) {
+      trace("Broadcasting: ",opType," on ",ch," @ ",pos);
+      var op = model.localIntegrate(opType, ch, pos);
       wootServer.send(op);
     };
 
-    var normalizeOpName = function(aceEventName) {
-      return aceEventName === "insertText" ? "ins" : "del" ;
+    function cat(lines) {
+      var nl = editor.getSession().getDocument().getNewLineCharacter();
+      return _.chain(lines).map(function(line) {return line+nl; } ).reduce(function(acc,line) { return acc+line; }).value();
+    }
+
+    var aceCommands = {
+      insertText:  function(text,range) { broadcast("ins", text, range); },
+      removeText:  function(text,range) { broadcast("del", text, range); },
+      insertLines: function(text,range,event) { aceCommands.insertText(cat(event.data.lines), range); },
+      removeLines: function(text,range,event) { console.log("TODO: removelines"); }
     };
 
+    function dispatch(f, text, range, event) {
+      _.isFunction(f) ? f(text, range, event) : trace("Ignoring Command ",event.data.action);
+    }
+
     editor.getSession().on('change', function(e) {
-      if (onAir && (e.data.action == "insertText" || e.data.action == "removeText"))
-        broadcast(normalizeOpName(e.data.action), e.data.text, e.data.range);
-      if (onAir && (e.data.action == "insertLines" ))
-        broadcastLines( "ins", e.data.lines, e.data.range);      
+      if (onAir) dispatch(aceCommands[e.data.action], e.data.text, e.data.range, e);
     });
 
 
