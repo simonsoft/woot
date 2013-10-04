@@ -107,7 +107,14 @@ define(
 
     function cat(lines) {
       var nl = editor.getSession().getDocument().getNewLineCharacter();
-      return _.chain(lines).map(function(line) {return line+nl; } ).reduce(function(acc,line) { return acc+line; }).value();
+      var combined =
+       (_.chain(lines)
+          .map(function(line) {return line+nl; })
+          .reduce(function(acc,line) { return acc+line; })
+          .value());
+      //console.log("Combined", combined);
+      return combined;
+
     }
 
     var aceCommands = {
