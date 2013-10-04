@@ -95,7 +95,7 @@ define(
         try {
           broadcast(op,lines[i],lineRange);  
         } catch (e) {
-            console.log("line ",i, lineRange, lines[i],e);          
+            trace("line ",i, lineRange, lines[i],e);          
         };
       }
     };
