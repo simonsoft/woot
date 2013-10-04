@@ -86,7 +86,21 @@ define(
         }
       },
 
+     tryDequeue: function() {
+       var op = _.find(this.queue, _.bind(this.canIntegrateOp, this));
 
+       if (op) {
+
+         function eq(x) {
+           return x.op === op.op &&
+             x.wchar.id.site === op.wchar.id.site &&
+             x.wchar.id.clock === op.wchar.id.clock;
+         }
+
+         this.queue = _.reject(this.queue, eq); // mutate
+         this.remoteIntegrate(op);
+       }
+    },
 
       // The first index in `col` where `pred` is true for an element of `col`; or -1 otherwise.
       indexWhere: function(col, pred) {
@@ -112,6 +126,7 @@ define(
             this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next);
             var ipos = this.visibleIndexOf(op.wchar.id);
             if (op.afterIntegration) op.afterIntegration(ipos,op,this);
+            this.tryDequeue();
           }
           else if (op.op == "del") {
             var dpos = this.visibleIndexOf(op.wchar.id);
@@ -122,10 +137,11 @@ define(
             err("Unrecognised op:", op.op, op);
           }
         } else {
-          trace("Queueing");
           this.queue.push(op); // mutate
         }
       },
+
+
 
       subseq: function(prev,next) {
         var from = prev.beginning ? 0 : this.indexOf(prev) + 1,
@@ -152,22 +168,6 @@ define(
       ins: function(wchar, pos) {
         trace("Insert ", wchar, " at ", pos);
         this.chars.splice(pos, 0, wchar); // mutate
-
-        // de-queue a (now valid) waiting operation:
-        var op = _.find(this.queue, _.bind(this.canIntegrateOp, this));
-
-        if (op) {
-
-          function eq(x) {
-            return x.op === op.op &&
-              x.wchar.id.site === op.wchar.id.site &&
-              x.wchar.id.clock === op.wchar.id.clock;
-          }
-
-          this.queue = _.reject(this.queue, eq); // mutate
-          this.remoteIntegrate(op);
-        }
-
       },
 
       hide: function(id) {
@@ -177,7 +177,9 @@ define(
       // (WChar, Id, Id) => Unit
       integrateIns: function(wchar, before, after) {
         var s = this.subseq(before, after);
-        if (_.isEmpty(s)) this.ins(wchar, this.indexOf(after));
+        if (_.isEmpty(s)) {
+          this.ins(wchar, this.indexOf(after));
+        }
         else {
 
           var L = [before].concat(_.pluck(this.reduce(s),'id'));
