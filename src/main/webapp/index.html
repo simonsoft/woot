@@ -12,15 +12,13 @@
       left: 0;
     }
   </style>
+
+  <script src="jquery-1.10.2.min.js"></script>
+
 </head>
 <body>
 
 <div id="editor"></div>
-
-<script data-main="main" src="require.js"></script>
-
-<!-- Required here for Lift Ajax/Comet -->
-<script src="jquery-1.10.2.min.js"></script>
 
 <script data-lift="WootServices" type="text/javascript" charset="utf-8">
   var wootServer = {
@@ -28,6 +26,8 @@
     init: function(config) { console.log("Unimplemented init called", config); return $.Deferred().promise(); }
   };
 </script>
+
+<script data-main="main" src="require.js"></script>
 
 </body>
 </html>

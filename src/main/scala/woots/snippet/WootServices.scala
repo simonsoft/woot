@@ -9,6 +9,7 @@ import net.liftweb.http.{S, LiftSession, RoundTripInfo }
 import net.liftweb.json._
 
 import net.liftweb.common.Loggable
+import net.liftweb.http.js.JE._
 
 object Trace extends Loggable {
   def apply[T](f : => T) : T = {
@@ -25,7 +26,7 @@ object WootServices extends Loggable {
   def render = S.session.map(javascript) openOr NodeSeq.Empty
 
   private def javascript(s: LiftSession): NodeSeq = Script {
-    JsCrVar("wootServer", s buildRoundtrip services)
+    OnLoad( SetExp(JsVar("wootServer"), s buildRoundtrip services))
   }
 
   private def services = List[RoundTripInfo](

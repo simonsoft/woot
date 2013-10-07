@@ -86,7 +86,9 @@ define(
 
     // TODO: would it be better if model was created, somehow, during wootServer.init?
     var model = new WString(1, 1);
-    wootServer.init({ docId: "1" }).then(messageHandler).done(shutdownHandler);
+    jQuery(document).ready(function() {
+      wootServer.init({ docId: "1" }).then(messageHandler).done(shutdownHandler);
+    });
 
     // `text` is of arbitrary size. For now we serialize as individual operations:
     var broadcast = function(op, text, range) {
