@@ -2,15 +2,23 @@ package woots
 package snippet
 
 import scala.xml.NodeSeq
+import scala.collection.immutable.Stream._
+
 import net.liftweb.http.js.JsCmds._
-import net.liftweb.http.{ RoundTripHandlerFunc, S, LiftSession, RoundTripInfo }
+import net.liftweb.http.{S, LiftSession, RoundTripInfo }
 import net.liftweb.json._
-import net.liftweb.json.JsonDSL._
 
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.Random
+import net.liftweb.common.Loggable
 
-object WootServices {
+object Trace extends Loggable {
+  def apply[T](f : => T) : T = {
+    val r = f
+    logger.info(s"Trace($r)")
+    r
+  }
+}
+
+object WootServices extends Loggable {
 
   implicit val formats = DefaultFormats
 
@@ -31,34 +39,24 @@ object WootServices {
     JNull
   }
 
+  def maxClockValue(site: SiteId, model: WString) : ClockValue =
+    model.chars.filter(_.id.ns == site).
+                map(_.id.ng).
+                foldLeft(0L) { math.max }
+
   // TODO: how to identify the document the user wants to work with?
   // TODO: how to signify a new/unsaved document?
-  private def init(config: JValue, onChange: RoundTripHandlerFunc): Unit = {
-    println("Loading WOOT model " + config)
+  private def init(config: JValue) : Stream[JValue] = {
+    logger.info(s"Loading WOOT model $config")
 
-    val site = S.session.map(_.uniqueId).getOrElse("SITE_ID_UNAVAILABLE")
-    Broadcaster ! AddSite(site)
-    // TODO: What clock value?
-    // Should the clock value be the last clock value of the document?
-    // Hmmm, If the entire list of changes of the document are sent to the client,
-    // one would hope there is an optimization available somewhere, the initial 
-    // clock value should be that at the initial document creation.  
-    val initClockValue = System.currentTimeMillis()
+    val stream = for {
+      site <- (S.session.map(_.uniqueId))
+      Setup(snapshot, queue) <- ((Broadcaster !! AddSite(site)).asA[Setup])
+      initClockValue = (maxClockValue(site, snapshot))
+    } yield toJson(snapshot,site,initClockValue) #:: Stream.continually(queue.take())
 
-    for { snapshot ← (Broadcaster !! GetModel()).asA[WString] } {
-      val chars: JValue = snapshot.chars.map(toJson)
-      val queue: JValue = snapshot.queue.map(toJson)
-      val doc = ("chars" -> chars) ~ ("queue" -> queue) ~ ("site" -> site) ~ ("clockValue" -> initClockValue)
-      onChange.send(doc)
-    }
-
-    for {
-      queue ← (Broadcaster !! GetQueue(site)).asA[LinkedBlockingQueue[JValue]]
-    } {
-      println(s"Streaming for site $site through ${queue.hashCode}")
-      Stream.continually(queue.take()).foreach(v ⇒ onChange.send(v))
-    }
-
+    logger.info(stream)
+    stream openOr Stream.empty
   }
 
 }

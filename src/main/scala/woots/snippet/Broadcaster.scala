@@ -7,13 +7,11 @@ import net.liftweb.actor.LiftActor
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.DefaultFormats
 
-trait Msg
-
 case class AddSite(id: SiteId)
 case class RemoveSite(id: SiteId)
-case class GetQueue(id: SiteId)
 case class PushToQueue(operation: JValue)
-case class GetModel()
+
+case class Setup(model: WString, queue: LinkedBlockingQueue[JValue])
 
 object Broadcaster extends LiftActor with Loggable {
 
@@ -27,15 +25,25 @@ object Broadcaster extends LiftActor with Loggable {
   private val qs = collection.mutable.Map[SiteId, LinkedBlockingQueue[JValue]]()
 
   def messageHandler: PartialFunction[Any, Unit] = {
-    case AddSite(siteId) if sites contains siteId ⇒ logger.warn("Site already added")
 
-    case AddSite(siteId) ⇒  sites ::= siteId
-    	println(s" added $siteId to $sites")
+    case AddSite(siteId) if sites contains siteId ⇒
+      logger.warn(s"Site $siteId already added")
+      reply {
+        Setup(model, qs(siteId))
+      }
 
-    case RemoveSite(siteId) ⇒  sites = sites.filter(_ != siteId)
-        println(s" removed $siteId from $sites")
-    case GetQueue(siteId) ⇒ 
-    reply(qs.getOrElseUpdate(siteId, new LinkedBlockingQueue[JValue]))
+    case AddSite(siteId) ⇒
+      logger.info(s"Adding $siteId")
+      sites ::= siteId
+      val q = qs.getOrElseUpdate(siteId, new LinkedBlockingQueue[JValue])
+      reply {
+        Setup(model, q)
+      }
+
+    case RemoveSite(siteId) ⇒
+        sites = sites.filter(_ != siteId)
+        logger.info(s" removed $siteId from $sites")
+
     case PushToQueue(operation: JValue) ⇒
       import JsonFormats.JOp
 
@@ -48,7 +56,6 @@ object Broadcaster extends LiftActor with Loggable {
         case x: Throwable ⇒ logger.error("Unable to integrate operation", x) // e.g., match/deserialization error?
       }
 
-    case GetModel() ⇒  reply(model)
     case otherwise ⇒ logger.error(s"Unknown msg $otherwise")
   }
 

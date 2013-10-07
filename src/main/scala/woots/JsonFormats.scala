@@ -1,6 +1,6 @@
 package woots
 
-import net.liftweb.json.DefaultFormats
+import net.liftweb.json._
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.JsonDSL._
 
@@ -54,4 +54,11 @@ object JsonFormats {
       case Ending ⇒ ("ending" -> true)
       case ci: CharId ⇒ toJson(ci)
     }
+
+  def toJson(model: WString, site: SiteId, initClockValue: ClockValue) : JValue = {
+    val chars: JValue = model.chars.map(toJson)
+    val queue: JValue = model.queue.map(toJson)
+    val doc = ("chars" -> chars) ~ ("queue" -> queue) ~ ("site" -> site) ~ ("clockValue" -> initClockValue)
+    doc
+  }
 }
