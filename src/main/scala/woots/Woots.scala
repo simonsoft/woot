@@ -1,7 +1,6 @@
 package woots
 
-import net.liftweb.common.Logger
-import net.liftweb.common.Loggable
+
 
 // # Each character has an `Id`.
 // An `Id` is usually made up of a `SiteId` and a `ClockValue`, but there are two special cases 
@@ -67,7 +66,7 @@ case class DeleteOp(override val wchar : WChar, override val from : SiteId) exte
 // The intention is for this data structure to be immutable: the `integrate` and `delete` operations produce new `WString` instances.
 case class WString(
     chars: Vector[WChar] = Vector.empty,
-    queue: Vector[Operation] = Vector.empty) extends Loggable {
+    queue: Vector[Operation] = Vector.empty) {
 
   lazy val visible = chars.filter(_.isVisible)
 
@@ -170,17 +169,16 @@ case class WString(
 
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
 
-           
             // Modified from the implementation from `IntegrateIns` p. 11 of RR5580.
-            val i = try {
-              math.min(L.length -1,L.takeWhile( _ < c.id ).length)
-            } catch {
-              case e:Throwable => 
-                logger.error(s"Error calculating character intergrals L length ${L.length}  c $c",e);
-              1;
-            }
-            
- 	             
+            val i = math.min(L.length -1,L.takeWhile( _ < c.id ).length)
+            require(i > 0,
+              s"""|Unexpected integration point $i
+              |c: $c
+              |before: $before
+              |after: $after
+              |L: $L
+              |search: ${search}""".stripMargin)
+
             integrate(c, L(i-1), L(i))
       }
 

@@ -56,7 +56,6 @@ object WootServices extends Loggable {
       initClockValue = (maxClockValue(site, snapshot))
     } yield toJson(snapshot,site,initClockValue) #:: Stream.continually(queue.take())
 
-    logger.info(stream)
     stream openOr Stream.empty
   }
 
