@@ -15,6 +15,7 @@ define(
 
     var trace = silence;
     var err = console.log;
+    var warn = function() { if (console && console.log) console.log.apply(console, arguments); };
 
     WString.prototype = {
 
@@ -123,10 +124,14 @@ define(
 
         if (this.canIntegrateOp(op)) {
           if (op.op === "ins") {
-            this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next);
-            var ipos = this.visibleIndexOf(op.wchar.id);
-            if (op.afterIntegration) op.afterIntegration(ipos,op,this);
-            this.tryDequeue();
+            if (this.indexOf(op.wchar.id) != -1) {
+              warn("Skipping already integrated char", op.wchar.id);
+            } else {
+              this.integrateIns(op.wchar, op.wchar.prev, op.wchar.next);
+              var ipos = this.visibleIndexOf(op.wchar.id);
+              if (op.afterIntegration) op.afterIntegration(ipos,op,this);
+              this.tryDequeue();
+            }
           }
           else if (op.op == "del") {
             var dpos = this.visibleIndexOf(op.wchar.id);

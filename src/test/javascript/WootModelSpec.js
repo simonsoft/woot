@@ -129,8 +129,35 @@ describe("WOOT Model", function() {
 
   });
 
+  describe("Integration should be idempotent", function() {
+
+    it("same char insert integrated twice has no effect", function() {
+      var site1 = new WString("site1", 1);
+      var op1 = site1.localIntegrate("ins", "1", 0);
+      expect(site1.text()).toBe("1");
+
+      site1.remoteIntegrate(op1);
+      expect(site1.text()).toBe("1");
+
+      site1.remoteIntegrate(op1);
+      expect(site1.text()).toBe("1");
+    });
+
+    it("same char deleted twice has no effect", function() {
+      var site1 = new WString("site1", 1);
+      var op1 = site1.localIntegrate("ins", "1", 0);
+      expect(site1.text()).toBe("1");
+
+      var op2 = site1.localIntegrate("del", "1", 0);
+      expect(site1.text()).toBe("");
+
+      site1.remoteIntegrate(op2);
+      expect(site1.text()).toBe("");
+
+    });
 
 
+  });
 
   describe("Deleting", function() {
 
