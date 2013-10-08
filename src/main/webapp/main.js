@@ -123,7 +123,7 @@ define(
       insertText:  function(text,range) { broadcast("ins", text, range); },
       removeText:  function(text,range) { broadcast("del", text, range); },
       insertLines: function(text,range,event) { aceCommands.insertText(cat(event.data.lines), range); },
-      removeLines: function(text,range,event) { console.log("TODO: removelines"); }
+      removeLines: function(text,range,event) { aceCommands.removeText(cat(event.data.lines), range); },
     };
 
     function dispatch(f, text, range, event) {
