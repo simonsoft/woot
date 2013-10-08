@@ -70,10 +70,25 @@ define(
       trace("Handling: ", v);
       if (isDocumentMessage(v)) { 
         model.init(v.site, v.clockValue, v.chars, v.queue);
+        $('#siteId').html(v.site);
+        $('#clockValue').html(v.clockValue);
+        $('#qSize').html(model.queue.length);
+
         offAir(function() { editor.getSession().getDocument().setValue(model.text()); });
       } 
-      else if (isOpToIntegrate(v,model)) model.remoteIntegrate(v, afterRemoteIntegration);
-      else trace("Ignoring ", v);
+      else if (isOpToIntegrate(v,model)) {
+        model.remoteIntegrate(v, afterRemoteIntegration);
+        $('#lastCharRecv').html(v.wchar.alpha+" "+v.op);
+        $('#lastIdRecv').html(JSON.stringify(v.wchar.id));
+        $('#qSize').html(model.queue.length);
+        $('#clockValue').html(model.clockValue);
+
+
+      }
+      else {
+        trace("Ignoring ", v);
+        alert(v);
+      }
     };
 
     var shutdownHandler = function() {
@@ -85,7 +100,7 @@ define(
 
 
     // TODO: would it be better if model was created, somehow, during wootServer.init?
-    var model = new WString(1, 1);
+    /* TODO: reinstate: var */ model = new WString(1, 1);
     jQuery(document).ready(function() {
       wootServer.init({ docId: "1" }).then(messageHandler).done(shutdownHandler);
     });
@@ -104,6 +119,9 @@ define(
     var broadcast1 = function(opType, ch, pos) {
       trace("Broadcasting: ",opType," on ",ch," @ ",pos);
       var op = model.localIntegrate(opType, ch, pos);
+      $('#lastCharSent').html(ch+" "+opType);
+      $('#lastIdSent').html(JSON.stringify(op.wchar.id));
+      $('#clockValue').html(model.clockValue);
       wootServer.send(op);
     };
 
@@ -132,6 +150,7 @@ define(
     }
 
     editor.getSession().on('change', function(e) {
+      $('#lastAceEvent').html(e.data.action);
       if (onAir) dispatch(aceCommands[e.data.action], e.data.text, e.data.range, e);
     });
 
