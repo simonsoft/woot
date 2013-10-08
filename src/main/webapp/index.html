@@ -6,7 +6,7 @@
   <style type="text/css" media="screen">
     #editor {
       position: absolute;
-      top: 0;
+      top: 200px;
       right: 0;
       bottom: 0;
       left: 0;
@@ -18,6 +18,42 @@
 </head>
 <body>
 
+<div id="console">
+
+  <div>
+    This site: <span id="siteId">?</span>. Current clock value: <span id="clockValue">?</span>
+  </div>
+
+  <div>
+    Queue size: <span id="qSize">?</span>.
+  </div>
+
+  <table width="60%">
+    <tr>
+      <th colspan="2">ACE</th>
+      <th colspan="2">Send</th>
+      <th colspan="2">Receive</th>
+    </tr>
+
+    <tr>
+      <td>Event type:</td><td><span id="lastAceEvent">?</span></td>
+      <td>Last char:</td><td><span id="lastCharSent">?</span></td>
+      <td>Last char:</td><td><span id="lastCharRecv">?</span></td>
+    </tr>
+
+    <tr>
+      <td>-</td><td>-</td>
+      <td>Last ID:</td><td><span id="lastIdSent">?</span></td>
+      <td>Last ID:</td><td><span id="lastIdRecv">?</span></td>
+    </tr>
+
+  </table>
+
+  <button onclick="console.log(model.queue);">Log model queue</button>
+  <button type="button" onclick="console.log(model.chars);">Log model wchars</button>
+  <button type="button" onclick="console.log(model.text());">Log model text</button>
+
+</div>
 <div id="editor"></div>
 
 <script data-lift="WootServices" type="text/javascript" charset="utf-8">
