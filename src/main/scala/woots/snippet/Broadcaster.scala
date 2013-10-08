@@ -41,8 +41,9 @@ object Broadcaster extends LiftActor with Loggable {
       }
 
     case RemoveSite(siteId) ⇒
+        logger.info(s" removed $siteId from $sites and $qs")    
         sites = sites.filter(_ != siteId)
-        logger.info(s" removed $siteId from $sites")
+        qs -= siteId
 
     case PushToQueue(operation: JValue) ⇒
       import JsonFormats.JOp
