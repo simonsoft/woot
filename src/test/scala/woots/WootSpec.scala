@@ -12,6 +12,29 @@ class WootSpec extends Specification with ScalaCheck {
       def integrate(c: WChar) = s.integrate(InsertOp(c, c.id.ns))
     }
   }
+  
+  "Site Id " should {
+    val a1 = CharId("a",1)
+    val a2 = CharId("a",2)
+
+    val b1 = CharId("b",1)
+    val b2 = CharId("b",2)
+    
+    
+    "behave as expected" in {
+      Beginning < Ending 	must_== true
+      Ending    < Beginning must_== false
+      a1 		< Beginning must_== false
+      Beginning < a1 	 	must_== true
+      a1 		< Ending 	must_== true
+      Ending 	< a1 	 	must_== false
+      a1 < a2 				must_== true
+      a1 < b1 				must_== true
+      a1 < b2 				must_== true
+      a1 < a1 				must_== false
+      a2 < b2 				must_== true	
+    }
+  }
 
   "Single User Woot" should {
     
