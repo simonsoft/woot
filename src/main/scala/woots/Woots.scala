@@ -172,14 +172,7 @@ case class WString(
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
 
             // Modified from the implementation from `IntegrateIns` p. 11 of RR5580.
-            val i = math.min(L.length -1,L.takeWhile( _ < c.id ).length)
-            require(i > 0,
-              s"""|Unexpected integration point $i
-              |c: $c
-              |before: $before
-              |after: $after
-              |L: $L
-              |search: ${search}""".stripMargin)
+            val i = math.max(1, math.min(L.length-1, L.takeWhile( _ < c.id ).length))
 
             integrate(c, L(i-1), L(i))
       }
