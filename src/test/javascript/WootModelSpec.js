@@ -223,6 +223,28 @@ describe("WOOT Model", function() {
       site2.remoteIntegrate(ins);
       expect(fWasRun).toBe(true);
 
+    });
+
+
+    it("should be idempotent", function() {
+
+      var site1 = new WString(1, 1);
+      var ins = site1.localIntegrate("ins", "A", 0);
+      var del = site1.localIntegrate("del", "A", 0);
+
+      var site2 = new WString(2, 1);
+      site2.remoteIntegrate(ins);
+
+      var fRunCount = 0;
+      site2.remoteIntegrate(del, function(pos,op) {
+        fRunCount = fRunCount + 1;
+        expect(_.omit(op, 'afterIntegration')).toEqual(del);
+        expect(pos).toBe(0);
+      });
+      expect(fRunCount).toBe(1);
+
+      site2.remoteIntegrate(ins);
+      expect(fRunCount).toBe(1);
 
     });
 

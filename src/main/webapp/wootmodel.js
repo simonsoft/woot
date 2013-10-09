@@ -135,8 +135,11 @@ define(
           }
           else if (op.op == "del") {
             var dpos = this.visibleIndexOf(op.wchar.id);
-            this.hide(op.wchar.id);
-            if (op.afterIntegration) op.afterIntegration(dpos,op,this);
+            var wchar = this.chars[this.indexOf(op.wchar.id)];
+            if (wchar.isVisible) {
+              this.hide(op.wchar.id);
+              if (op.afterIntegration) op.afterIntegration(dpos,op,this);
+            }
           }
           else {
             err("Unrecognised op:", op.op, op);
