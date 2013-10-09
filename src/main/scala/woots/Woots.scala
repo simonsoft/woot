@@ -1,5 +1,6 @@
 package woots
 
+import scala.annotation.tailrec
 
 
 // # Each character has an `Id`.
@@ -156,6 +157,7 @@ case class WString(
     case _                                 => enqueue(op)
   }
 
+  @tailrec
   private def integrate(c: WChar, before: Id, after: Id) : WString = {
       
       // Looking at all the characters between the previous and next positions:
