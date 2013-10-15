@@ -105,8 +105,7 @@ define(
 
     // `text` is of arbitrary size. For now we serialize as individual operations:
     var broadcast = function(op, text, range) {
-      var base = idx(range.start), len = (idx(range.end) - base);
-
+      var base = idx(range.start), len = text.length;
       // When removing multiple character, the position for delete does not change:
       function charpos(p) { return op == "ins" ? base+p : base; }
 
