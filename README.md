@@ -35,19 +35,19 @@ You'll find the code in `src/main/webapp/wootmodel.js` and it uses [Underscore.j
 
 ## Example usage
 
-    // Empty model for site 1, clock value 0.
-    var model = new WString(1, 0)
+    // Empty model for site A, clock value 0.
+    var model = new WString("A", 0)
 
-    // Locally insert "A" at position 0.
+    // Locally insert "a" at position 0.
     // This returns an operation you can send to your peers.
-    var op = model.localIntegrate("ins", "A", 0);
+    var op = model.localIntegrate("ins", "a", 0);
 
     // If you receive an operation:
-    model.remoteIntegrate(op, function(ipos) {
+    model.remoteIntegrate(op, function(p) {
       if (op.op == "del")
-        console.log("Delete the char at pos ", ipos);
+        console.log("Delete the char at pos ", p);
    	  else
-   	    console.log("Insert ", op.wchar.alpha, " at ", ipos);
+   	    console.log("Insert ", op.wchar.alpha, " at ", p);
     });
 
 
@@ -63,7 +63,7 @@ For a full example of using the library via RequireJS, see `src/main/webapp/inde
 ### ID
 
       {
-       site: N,
+       site: "X",
        clock: N
       }
 ### WCHAR
@@ -80,7 +80,7 @@ For a full example of using the library via RequireJS, see `src/main/webapp/inde
  
 	  {
 	   op: "ins" (or "del"),
-	   from: N (site id),
+	   from: "X" (site id),
 	   wchar: WCHAR
 	  }
 
@@ -99,9 +99,9 @@ The Scala `WString` data structure is immutable, which is another difference fro
 ## Example usage
 
     val s = WString()
-    val c = WChar(CharId(1,1), 'A', Beginning, Ending)
-    val s_prime = s.integrate(InsOperation(c, from=1))
-    s_prime.text == "A"
+    val c = WChar(CharId("A",1), 'a', Beginning, Ending)
+    val s_prime = s.integrate(InsOperation(c, from="A"))
+    s_prime.text == "a"
 
 
 
@@ -124,8 +124,9 @@ This is a single document example using the [ACE](http://ace.c9.io/) editor, wit
 
 # Debugging in the browser 
 
-If you see either of these errors in your chrome console, view the [Stackoverflow Question](http://stackoverflow.com/questions/18365315/jquerys-jquery-1-10-2-min-map-is-triggering-a-404-not-found), for a solution:
-:
+If you see either of these errors in your chrome console...
+
   * GET http://localhost:8080/jquery-1.10.2.min.map 404 (Not Found) 
   * GET http://localhost:8080/underscore-min.map 404 (Not Found) 
 
+view this [Stackoverflow question](http://stackoverflow.com/questions/18365315/jquerys-jquery-1-10-2-min-map-is-triggering-a-404-not-found) for a solution.

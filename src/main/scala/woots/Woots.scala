@@ -1,8 +1,5 @@
 package woots
 
-import scala.annotation.tailrec
-
-
 // # Each character has an `Id`.
 // An `Id` is usually made up of a `SiteId` and a `ClockValue`, but there are two special cases 
 // called `Beginning` and `Ending`, because character points to the previous and next character `Id`.
@@ -34,10 +31,6 @@ case class CharId(ns: SiteId, ng: ClockValue) extends Id {
     case Beginning           => false
     case Ending              => true
   }
-}
-
-object CharId {
-  def genFrom(seed: CharId) : Stream[CharId] = Stream.cons(seed, genFrom(seed.inc))
 }
 
 
@@ -96,8 +89,7 @@ case class WString(
   }
                    
   // ## The parts of this `WString` between `prev` and `next`
-  // ...but excluding the neighbours themselves as required
-  // by the Woot algorithm: see [RR5580] p. 8. 
+  // ...but excluding the neighbours themselves as required (see [RR5580] p. 8)
   private def subseq(prev: Id, next: Id) : Vector[WChar] = {
     
     val from = prev match {
@@ -115,7 +107,6 @@ case class WString(
   
 
   // # Applicability test
-
   private def canIntegrate(op: Operation) : Boolean = op match {
     case InsertOp(c,_) => canIntegrate(c.next) && canIntegrate(c.prev)
     case DeleteOp(c,_) => chars.exists(_.id == c.id)
@@ -157,7 +148,7 @@ case class WString(
     case _                                 => enqueue(op)
   }
 
-  @tailrec
+  @scala.annotation.tailrec
   private def integrate(c: WChar, before: Id, after: Id) : WString = {
       
       // Looking at all the characters between the previous and next positions:
@@ -168,12 +159,8 @@ case class WString(
                  
           // - when there's a choice, locate an insert point based on `Id.<`
           case search : Vector[WChar] =>
-
             val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
-
-            // Modified from the implementation from `IntegrateIns` p. 11 of RR5580.
             val i = math.max(1, math.min(L.length-1, L.takeWhile( _ < c.id ).length))
-
             integrate(c, L(i-1), L(i))
       }
 
