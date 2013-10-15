@@ -21,12 +21,10 @@ object Trace extends Loggable {
 
 object WootServices extends Loggable {
 
-  implicit val formats = DefaultFormats
-
   def render = S.session.map(javascript) openOr NodeSeq.Empty
 
   private def javascript(s: LiftSession): NodeSeq = Script {
-    OnLoad( SetExp(JsVar("wootServer"), s buildRoundtrip services))
+    OnLoad(SetExp(JsVar("wootServer"), s buildRoundtrip services))
   }
 
   private def services = List[RoundTripInfo](
@@ -40,13 +38,7 @@ object WootServices extends Loggable {
     JNull
   }
 
-  def maxClockValue(site: SiteId, model: WString) : ClockValue =
-    model.chars.filter(_.id.ns == site).
-                map(_.id.ng).
-                foldLeft(0L) { math.max }
-
-  // TODO: how to identify the document the user wants to work with?
-  // TODO: how to signify a new/unsaved document?
+  // TODO: Identify the document the user wants to work with, or new/unsaved docs.
   private def init(config: JValue) : Stream[JValue] = {
     logger.info(s"Loading WOOT model $config")
 
@@ -58,5 +50,10 @@ object WootServices extends Loggable {
 
     stream openOr Stream.empty
   }
+
+  def maxClockValue(site: SiteId, model: WString) : ClockValue =
+    model.chars.filter(_.id.ns == site).map(_.id.ng).foldLeft(0L) {
+      math.max
+    }
 
 }
