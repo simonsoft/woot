@@ -40,7 +40,6 @@ define(
 
     // Convert a WOOT operation to an ACE delta object for WOOT index i:
     function asDelta(op, i) {
-      //console.log("Delta ",op.wchar.alpha,i,pos(i));
       return {
         action: op.op == "ins" ? "insertText" : "removeText",
         range: {
@@ -99,7 +98,6 @@ define(
     /* -- From client to server functions: local integration ----------------------------------------- */
 
 
-    // TODO: would it be better if model was created, somehow, during wootServer.init?
     /* TODO: reinstate: var */ model = new WString(1, 1);
     jQuery(document).ready(function() {
       wootServer.init({ docId: "1" }).then(messageHandler).done(shutdownHandler);
@@ -132,20 +130,17 @@ define(
           .map(function(line) {return line+nl; })
           .reduce(function(acc,line) { return acc+line; })
           .value());
-      //console.log("Combined", combined);
       return combined;
-
     }
 
     var aceCommands = {
       insertText:  function(text,range) { broadcast("ins", text, range); },
       removeText:  function(text,range) { broadcast("del", text, range); },
       insertLines: function(text,range,event) { aceCommands.insertText(cat(event.data.lines), range); },
-      removeLines: function(text,range,event) { aceCommands.removeText(cat(event.data.lines), range); },
+      removeLines: function(text,range,event) { aceCommands.removeText(cat(event.data.lines), range); }
     };
 
     function dispatch(f, text, range, event) {
-      //console.log(event.data);
       _.isFunction(f) ? f(text, range, event) : trace("Ignoring Command ",event.data.action);
     }
 
