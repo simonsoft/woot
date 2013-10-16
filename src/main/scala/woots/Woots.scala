@@ -9,15 +9,16 @@ sealed trait Id {
 }
 
 object Beginning extends Id {
-  def < (that: Id) = true
-  
+  def < (that: Id) = that match {
+    case Beginning => false
+    case _         => true
+  }
+
   override def toString = "Beginning"
-  
 }
 
 object Ending extends Id {
   def < (that: Id) = false
-  
   override def toString = "Ending"
 }
 
@@ -33,7 +34,6 @@ case class CharId(ns: SiteId, ng: ClockValue) extends Id {
   }
 }
 
-
 // # Characters
 // Currently coded to be a `Char`, but could be a `T`.
 case class WChar(id: CharId, alpha: Char, prev: Id, next: Id, isVisible: Boolean = true)
@@ -42,9 +42,7 @@ case class WChar(id: CharId, alpha: Char, prev: Id, next: Id, isVisible: Boolean
 sealed trait Operation {
   def wchar : WChar
   def from: SiteId
-  def id = wchar.id
   def name : String
-
 }
 
 case class InsertOp(override val wchar : WChar, override val from : SiteId) extends Operation {
@@ -80,9 +78,9 @@ case class WString(
   // Note that the `id` is required to exist in the `WString`.
   private def indexOf(id: Id) : Int = {
     val p = id match {
-      case Ending => chars.length
+      case Ending    => chars.length
       case Beginning => 0
-      case _ => chars.indexWhere(_.id == id) 
+      case _         => chars.indexWhere(_.id == id)
     }
     require(p != -1)
     p
@@ -104,7 +102,6 @@ case class WString(
     
     chars.slice(from,until)  
   }
-  
 
   // # Applicability test
   private def canIntegrate(op: Operation) : Boolean = op match {
