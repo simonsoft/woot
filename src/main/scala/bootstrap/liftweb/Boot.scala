@@ -1,15 +1,8 @@
 package bootstrap.liftweb
 
-import java.util.Random
-
-import net.liftweb._
 import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.sitemap._
-import net.liftweb.util._
-import net.liftweb.util.Helpers._
-import woots.snippet.Broadcaster
-import woots.snippet.RemoveSite
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -45,9 +38,6 @@ class Boot {
 
     //Useful testing session timeouts.
     //LiftRules.sessionInactivityTimeout.default.set(Full(30L*1000))
-
-    //Clean up session related information in the broadcaster.
-    LiftSession.onShutdownSession ::= ((s: LiftSession) ⇒ { Broadcaster ! RemoveSite(s.uniqueId) })
 
   }
 }

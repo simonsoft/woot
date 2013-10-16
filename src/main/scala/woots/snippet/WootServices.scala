@@ -10,14 +10,7 @@ import net.liftweb.json._
 
 import net.liftweb.common.Loggable
 import net.liftweb.http.js.JE._
-
-object Trace extends Loggable {
-  def apply[T](f : => T) : T = {
-    val r = f
-    logger.info(s"Trace($r)")
-    r
-  }
-}
+import net.liftweb.util.Helpers
 
 object WootServices extends Loggable {
 
@@ -31,7 +24,6 @@ object WootServices extends Loggable {
     "send" -> receive _,
     "init" -> init _)
 
-  import JsonFormats._
 
   private def receive(jop: JValue): JValue = {
     Broadcaster ! PushToQueue(jop)
@@ -42,15 +34,22 @@ object WootServices extends Loggable {
   private def init(config: JValue) : Stream[JValue] = {
     logger.info(s"Loading WOOT model $config")
 
+    import JsonFormats._
+
+    val site = Helpers.nextFuncName
+
+    // Ensure site is cleaned up when session expires
+    S.session.foreach(_.addSessionCleanup { _ => Broadcaster ! RemoveSite(site) } )
+
     val stream = for {
-      site <- (S.session.map(_.uniqueId))
-      Setup(snapshot, queue) <- ((Broadcaster !! AddSite(site)).asA[Setup])
-      initClockValue = (maxClockValue(site, snapshot))
+      Setup(snapshot, queue) <- (Broadcaster !! AddSite(site)).asA[Setup]
+      initClockValue         =  maxClockValue(site, snapshot)
     } yield toJson(snapshot,site,initClockValue) #:: Stream.continually(queue.take())
 
     stream openOr Stream.empty
   }
 
+  // The largest clock value in the model for the site is the starting clock value for that site.
   def maxClockValue(site: SiteId, model: WString) : ClockValue =
     model.chars.filter(_.id.ns == site).map(_.id.ng).foldLeft(0L) {
       math.max
