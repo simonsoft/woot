@@ -18,14 +18,12 @@ object Broadcaster extends LiftActor with Loggable {
 
   var model = WString()
 
-  private var sites: List[SiteId] = Nil
-
-  // TODO: It be additionally indexed by document - otherwise this is a single document system (currently)
+  // TODO: additionally indexed by document (currently we are a single document system)
   private val qs = collection.mutable.Map[SiteId, LinkedBlockingQueue[JValue]]()
 
   def messageHandler: PartialFunction[Any, Unit] = {
 
-    case AddSite(siteId) if sites contains siteId ⇒
+    case AddSite(siteId) if qs.keySet contains siteId ⇒
       logger.warn(s"Site $siteId already added")
       reply {
         Setup(model, qs(siteId))
@@ -33,15 +31,13 @@ object Broadcaster extends LiftActor with Loggable {
 
     case AddSite(siteId) ⇒
       logger.info(s"Adding $siteId")
-      sites ::= siteId
       val q = qs.getOrElseUpdate(siteId, new LinkedBlockingQueue[JValue])
       reply {
         Setup(model, q)
       }
 
     case RemoveSite(siteId) ⇒
-        logger.info(s" removed $siteId from $sites and $qs")    
-        sites = sites.filter(_ != siteId)
+        logger.info(s" removed $siteId")
         qs -= siteId
 
     case PushToQueue(operation: JValue) ⇒
@@ -51,7 +47,7 @@ object Broadcaster extends LiftActor with Loggable {
         for (op ← operation.extractOpt[JOp].map(_.toOperation)) {
           model = model.integrate(op)
 
-          qs.filterKeys(_ != op.from).collect{
+          qs.par.filterKeys(_ != op.from).collect{
             case (s,q) ⇒
               logger.debug(s"${op.wchar.alpha} ${op.name} -> site starting: ${s.take(5)} queue: ${q.hashCode()}")
               q.add(operation)

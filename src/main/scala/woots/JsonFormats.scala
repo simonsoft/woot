@@ -6,8 +6,6 @@ import net.liftweb.json.JsonDSL._
 
 object JsonFormats {
 
-  // TODO: This packaging/repackaging is dull. Why not use the same classes for JavaScript and WString ?
-
   implicit val formats = DefaultFormats
 
   case class JId(site: Option[SiteId], clock: Option[Int], beginning: Option[Boolean], ending: Option[Boolean]) {
