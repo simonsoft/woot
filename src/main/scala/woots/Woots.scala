@@ -156,7 +156,7 @@ case class WString(
                  
           // - when there's a choice, locate an insert point based on `Id.<`
           case search : Vector[WChar] =>
-            val L : Vector[Id] = before +: reduce(search).map(_.id) :+ after
+            val L : Vector[Id] = before +: trim(search).map(_.id) :+ after
             val i = math.max(1, math.min(L.length-1, L.takeWhile( _ < c.id ).length))
             integrate(c, L(i-1), L(i))
       }
@@ -166,7 +166,7 @@ case class WString(
   // Don't consider characters that have a `prev` or `next` in the set of 
   // locations to consider (i.e., ones that are between the insert points of interest)
   // See last paragraph of first column of page 5 of CSCW06 (relating to figure 4b)
-  private def reduce(cs: Vector[WChar]) : Vector[WChar] = 
+  private def trim(cs: Vector[WChar]) : Vector[WChar] =
     for { 
       c <- cs
       if cs.forall(x => x.id != c.next && x.id != c.prev)
