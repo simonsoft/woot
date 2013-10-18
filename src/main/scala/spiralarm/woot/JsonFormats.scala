@@ -1,4 +1,5 @@
-package woots
+package spiralarm
+package woot
 
 import net.liftweb.json._
 import net.liftweb.json.JsonAST.JValue

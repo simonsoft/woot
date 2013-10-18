@@ -12,7 +12,7 @@ class Boot {
   def boot {
 
     // where to search snippet
-    LiftRules.addToPackages("woots")
+    LiftRules.addToPackages("spiralarm.woot")
 
     // Build SiteMap
     def sitemap = SiteMap(

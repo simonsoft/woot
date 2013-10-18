@@ -1,9 +1,9 @@
 import de.johoop.jacoco4sbt._
 import JacocoPlugin._
 
-name := "woots"
+name := "woot"
 
-version := "0.0.1"
+version := "1.0.0-SNAPSHOT"
 
 organization := "com.spiralarm"
 

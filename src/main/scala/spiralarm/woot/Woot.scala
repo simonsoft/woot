@@ -1,4 +1,5 @@
-package woots
+package spiralarm
+package woot
 
 // # Each character has an `Id`.
 // An `Id` is usually made up of a `SiteId` and a `ClockValue`, but there are two special cases 
@@ -68,7 +69,7 @@ case class WString(
   // ## Insert a `WChar` into the internal vector at position `pos`, returning a new `WString`
   // Position are indexed from zero
   //
-  protected[woots] def ins(char: WChar, pos: Int) : WString = {  
+  protected[woot] def ins(char: WChar, pos: Int) : WString = {  
     val (before, after) = chars splitAt pos
     copy(chars = (before :+ char) ++ after)
   }

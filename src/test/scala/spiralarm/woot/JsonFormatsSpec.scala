@@ -1,11 +1,11 @@
-package woots
+package spiralarm
+package woot
 
 import org.specs2.mutable._
-import woots.JsonFormats._
 import net.liftweb.json.{DefaultFormats, Extraction}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
-
+import JsonFormats._
 
 class JsonFormatsSpec extends Specification {
 

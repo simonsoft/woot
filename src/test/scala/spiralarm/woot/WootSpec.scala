@@ -1,4 +1,5 @@
-package woots
+package spiralarm
+package woot
 
 import org.specs2.mutable._
 import org.specs2.ScalaCheck

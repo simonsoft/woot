@@ -98,11 +98,19 @@ The Scala `WString` data structure is immutable, which is another difference fro
 
 ## Example usage
 
+    import spiralarm.woot._
     val s = WString()
     val c = WChar(CharId("A",1), 'a', Beginning, Ending)
     val s_prime = s.integrate(InsOperation(c, from="A"))
     s_prime.text == "a"
 
+## Documentation
+
+To build the documentation:
+
+    $ ./docco.sh
+
+and then open the files in the _docs_ folder.
 
 
 ## How to run the code

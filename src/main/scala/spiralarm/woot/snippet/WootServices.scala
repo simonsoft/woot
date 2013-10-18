@@ -1,4 +1,5 @@
-package woots
+package spiralarm
+package woot
 package snippet
 
 import scala.xml.NodeSeq
