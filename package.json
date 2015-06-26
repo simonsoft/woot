@@ -1,0 +1,29 @@
+{
+  "name": "woot",
+  "version": "0.0.1",
+  "description": "Forks https://bitbucket.org/d6y/woot, see https://www.youtube.com/watch?v=NSTZ4mIv_wk",
+  "main": "woot.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha"
+  },
+  "dependencies": {
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "chai": "^3.0.0",
+    "mocha": "^2.2.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Simonsoft/woot"
+  },
+  "author": "",
+  "license": "APACHE 2.0",
+  "bugs": {
+    "url": "https://github.com/Simonsoft/woot/issues"
+  },
+  "homepage": "https://github.com/Simonsoft/woot"
+}
