@@ -1,6 +1,6 @@
 {
-  "name": "woot",
-  "version": "0.0.1",
+  "name": "woot-crdt",
+  "version": "0.0.2",
   "description": "Forks https://bitbucket.org/d6y/woot, see https://www.youtube.com/watch?v=NSTZ4mIv_wk",
   "main": "woot.js",
   "directories": {
