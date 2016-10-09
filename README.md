@@ -86,7 +86,7 @@ For a full example of using the library via RequireJS, see `src/main/webapp/inde
 
 ## Jasmine unit tests
 
-To run the [Jasmine](http://pivotal.github.io/jasmine/) tests, open `src/test/javascript/SpecRunner.html` in a browser.
+To run the [Jasmine](https://jasmine.github.io/) tests, open `src/test/javascript/SpecRunner.html` in a browser.
 
 -------------------
 
